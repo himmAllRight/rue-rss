@@ -63,9 +63,10 @@ func main() {
 	feedparser := gofeed.NewParser()
 
 	println(len(database))
-	addFeed("http://www.wuxiaworld.com/feed/", feedparser)
-	addFeed("http://ryan.himmelwright.net/post/index.xml", feedparser)
-	addFeed("http://www.commitstrip.com/en/feed/", feedparser)
+	addAllFeeds(feedparser)
+	//addFeed("http://www.wuxiaworld.com/feed/", feedparser)
+	//addFeed("http://ryan.himmelwright.net/post/index.xml", feedparser)
+	//addFeed("http://www.commitstrip.com/en/feed/", feedparser)
 	println(len(database))
 	println("hey its working.\n")
 	fmt.Println("databse: ", database)
