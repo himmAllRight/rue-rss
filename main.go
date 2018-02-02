@@ -20,6 +20,12 @@ var feedStore []string = []string{
 	"http://ryan.himmelwright.net/post/index.xml",
 	"http://www.wuxiaworld.com/feed/"}
 
+// takes a url that points to a feed and adds it to the the pool of feed sources
+func addFeedSource(newURL string) bool {
+	feedStore = append(feedStore, newURL)
+	return true
+}
+
 // generates the items key idetifier
 func uniqueIdentifier(feedItem *gofeed.Item) string {
 	return feedItem.Link
