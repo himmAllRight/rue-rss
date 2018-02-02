@@ -15,6 +15,7 @@ import (
 //
 
 var database = make(map[string]*gofeed.Item)
+var debug = true
 
 // generates the items key idetifier
 func uniqueIdentifier(feedItem *gofeed.Item) string {
@@ -29,7 +30,13 @@ func createFeed(url string, feedparser *gofeed.Parser) *gofeed.Feed {
 
 // Add feed contents to DB
 func storeFeed(feed *gofeed.Feed) bool {
+	if debug {
+		println("Storing Feeds for: ", feed.Title)
+	}
 	for i := 0; i < len(feed.Items); i++ {
+		if debug {
+			println("Adding entry: ", feed.Items[i].Title)
+		}
 		database[uniqueIdentifier(feed.Items[i])] = feed.Items[i]
 	}
 	return true
@@ -44,11 +51,16 @@ func addFeed(url string, feedparser *gofeed.Parser) bool {
 func main() {
 	feedparser := gofeed.NewParser()
 
-	println(len(database))
+	if debug {
+		println(len(database))
+	}
 	addFeed("http://www.wuxiaworld.com/feed/", feedparser)
 	addFeed("http://ryan.himmelwright.net/post/index.xml", feedparser)
 	addFeed("http://www.commitstrip.com/en/feed/", feedparser)
-	println(len(database))
-	println("hey its working.\n")
-	fmt.Println("databse: ", database)
+
+	if debug {
+		println(len(database))
+		println("hey its working.\n")
+		fmt.Println("databse: ", database)
+	}
 }
