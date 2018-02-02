@@ -13,9 +13,6 @@ import (
 //
 
 var database = make(map[string]*gofeed.Item)
-var testURL = "http://www.wuxiaworld.com/feed/"
-
-var feedparser = gofeed.NewParser()
 
 // generates the items key idetifier
 func uniqueIdentifier(feedItem *gofeed.Item) string {
@@ -23,7 +20,7 @@ func uniqueIdentifier(feedItem *gofeed.Item) string {
 }
 
 // Create a new feed item from a url
-func createFeed(url string) *gofeed.Feed {
+func createFeed(url string, feedparser *gofeed.Parser) *gofeed.Feed {
 	feed, _ := feedparser.ParseURL(url)
 	return feed
 }
@@ -37,14 +34,18 @@ func storeFeed(feed *gofeed.Feed) bool {
 }
 
 // Create a Feed and at it to DB
-func addFeed(url string) bool {
-	feed := createFeed(url)
+func addFeed(url string, feedparser *gofeed.Parser) bool {
+	feed := createFeed(url, feedparser)
 	return storeFeed(feed)
 }
 
 func main() {
+	feedparser := gofeed.NewParser()
 
 	print(len(database))
+	addFeed("http://www.wuxiaworld.com/feed/", feedparser)
+	addFeed("http://ryan.himmelwright.net/post/index.xml", feedparser)
+	addFeed("http://www.commitstrip.com/en/feed/", feedparser)
 	//var result = storeFeed(testURL)
 	print(len(database))
 	print("hey its working.\n")
