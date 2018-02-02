@@ -13,6 +13,10 @@ import (
 //
 
 var database = make(map[string]*gofeed.Item)
+var feedStore []string = []string{
+	"http://www.commitstrip.com/en/feed/",
+	"http://ryan.himmelwright.net/post/index.xml",
+	"http://www.wuxiaworld.com/feed/"}
 
 // generates the items key idetifier
 func uniqueIdentifier(feedItem *gofeed.Item) string {
