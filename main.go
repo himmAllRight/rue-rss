@@ -5,13 +5,12 @@ import (
 	//	"fmt"
 )
 
-var database []gofeed.Item
-
-var testURL string = "http://www.wuxiaworld.com/feed/"
+var database = make(map[string]gofeed.Item)
+var testURL = "http://www.wuxiaworld.com/feed/"
 
 var feedparser = gofeed.NewParser()
 
-func storeFeed(url string, destination []gofeed.Item) string {
+func storeFeed(url string, destination *[]gofeed.Item) string {
 	var feed, _ = feedparser.ParseURL(url)
 
 	var i = 0 // counter
