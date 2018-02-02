@@ -22,15 +22,24 @@ func uniqueIdentifier(feedItem *gofeed.Item) string {
 	return feedItem.Link
 }
 
-// stored all elements into the feed using their
-func storeFeed(url string) bool {
-	var feed, _ = feedparser.ParseURL(url)
+// Create a new feed item from a url
+func createFeed(url string) *gofeed.Feed {
+	feed, _ := feedparser.ParseURL(url)
+	return feed
+}
 
-	var i = 0 // counter
-	for i = 0; i < len(feed.Items); i++ {
+// Add feed contents to DB
+func storeFeed(feed *gofeed.Feed) bool {
+	for i := 0; i < len(feed.Items); i++ {
 		database[uniqueIdentifier(feed.Items[i])] = feed.Items[i]
 	}
 	return true
+}
+
+// Create a Feed and at it to DB
+func addFeed(url string) bool {
+	feed := createFeed(url)
+	return storeFeed(feed)
 }
 
 func main() {
