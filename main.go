@@ -15,7 +15,7 @@ import (
 //
 
 var database = make(map[string]*gofeed.Item)
-var feedStore []string = []string{
+var feedStore = []string{
 	"http://www.commitstrip.com/en/feed/",
 	"http://ryan.himmelwright.net/post/index.xml",
 	"http://www.wuxiaworld.com/feed/"}
@@ -49,6 +49,14 @@ func storeFeed(feed *gofeed.Feed) bool {
 func addFeed(url string, feedparser *gofeed.Parser) bool {
 	feed := createFeed(url, feedparser)
 	return storeFeed(feed)
+}
+
+//iterate over all feed sources in feedStore
+func addAllFeeds(feedparser *gofeed.Parser) bool {
+	for _, element := range feedStore {
+		addFeed(element, feedparser)
+	}
+	return true
 }
 
 func main() {
