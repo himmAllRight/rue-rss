@@ -2,6 +2,8 @@ package main
 
 import (
 	//"fmt"
+	"fmt"
+
 	"github.com/mmcdole/gofeed"
 )
 
@@ -42,14 +44,11 @@ func addFeed(url string, feedparser *gofeed.Parser) bool {
 func main() {
 	feedparser := gofeed.NewParser()
 
-	print(len(database))
+	println(len(database))
 	addFeed("http://www.wuxiaworld.com/feed/", feedparser)
 	addFeed("http://ryan.himmelwright.net/post/index.xml", feedparser)
 	addFeed("http://www.commitstrip.com/en/feed/", feedparser)
-	//var result = storeFeed(testURL)
-	print(len(database))
-	print("hey its working.\n")
-	//print(result)
-	//getFeed(testURL)
-
+	println(len(database))
+	println("hey its working.\n")
+	fmt.Println("databse: ", database)
 }
