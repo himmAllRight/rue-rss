@@ -3,8 +3,8 @@ package main
 import (
 	//"fmt"
 	"fmt"
-
 	"github.com/mmcdole/gofeed"
+	"sync"
 )
 
 // TODO
@@ -62,9 +62,15 @@ func addFeed(url string, feedparser *gofeed.Parser) bool {
 
 //iterate over all feed sources in feedStore
 func addAllFeeds(feedparser *gofeed.Parser) bool {
+	var waitGroup sync.WaitGroup
 	for _, element := range feedStore {
-		addFeed(element, feedparser)
+		waitGroup.Add(1)
+		go func(element string, feedparser *gofeed.Parser) {
+			addFeed(element, feedparser)
+			waitGroup.Done()
+		}(element, feedparser)
 	}
+	waitGroup.Wait()
 	return true
 }
 
