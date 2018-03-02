@@ -3,8 +3,11 @@ package main
 import (
 	//"fmt"
 	"fmt"
-	"github.com/mmcdole/gofeed"
 	"sync"
+
+	"github.com/mmcdole/gofeed"
+
+	"database/sql"
 )
 
 // TODO
@@ -22,6 +25,13 @@ var feedStore = []string{
 	"http://www.commitstrip.com/en/feed/",
 	"http://ryan.himmelwright.net/post/index.xml",
 	"http://www.wuxiaworld.com/feed/"}
+
+func initDB() {
+	database, _ := sql.Open("sqlite3", "./testdb.db")
+	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feeds (id INTEGER PRIMARY KEY, feedname TEXT, url TEXT, lastread TEXT)")
+	statement.Exec()
+
+}
 
 // takes a url that points to a feed and adds it to the the pool of feed sources
 func addFeedSource(newURL string) bool {
