@@ -2,12 +2,13 @@ package main
 
 import (
 	//"fmt"
-	"fmt"
 	"sync"
 
 	"github.com/mmcdole/gofeed"
 
 	"database/sql"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // TODO
@@ -26,11 +27,25 @@ var feedStore = []string{
 	"http://ryan.himmelwright.net/post/index.xml",
 	"http://www.wuxiaworld.com/feed/"}
 
-func initDB() {
+// Prints only if debug global is true
+func debugPrint(str string) {
+	if debug {
+		println(str)
+	}
+}
+
+func initDB() *sql.DB {
+	debugPrint("Opening DB File")
 	database, _ := sql.Open("sqlite3", "./testdb.db")
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feeds (id INTEGER PRIMARY KEY, feedname TEXT, url TEXT, lastread TEXT)")
+
+	// Create Table
+	debugPrint("Creating Table")
+	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feeddata (id ITNEGER PRIMARY KEY, feedname TEXT, url TEXT, read INTEGER)")
+	debugPrint("Exec Table Creation")
 	statement.Exec()
 
+	// Return db ptr
+	return (database)
 }
 
 // takes a url that points to a feed and adds it to the the pool of feed sources
@@ -51,7 +66,7 @@ func createFeed(url string, feedparser *gofeed.Parser) *gofeed.Feed {
 }
 
 // Add feed contents to DB
-func storeFeed(feed *gofeed.Feed) bool {
+func storeFeed(feed *gofeed.Feed, db *sql.DB) bool {
 	if debug {
 		println("Storing Feeds for: ", feed.Title)
 	}
@@ -59,24 +74,27 @@ func storeFeed(feed *gofeed.Feed) bool {
 		if debug {
 			println("Adding entry: ", feed.Items[i].Title)
 		}
-		database[uniqueIdentifier(feed.Items[i])] = feed.Items[i]
+
+		// database[uniqueIdentifier(feed.Items[i])] = feed.Items[i]
+		statement, _ := db.Prepare("INSERT INTO feeds (feedname, url, lastread) VALUES (?, ?, ?)")
+		statement.Exec(feed.Title, feed.FeedLink, 0)
 	}
 	return true
 }
 
 // Create a Feed and at it to DB
-func addFeed(url string, feedparser *gofeed.Parser) bool {
+func addFeed(url string, feedparser *gofeed.Parser, db *sql.DB) bool {
 	feed := createFeed(url, feedparser)
-	return storeFeed(feed)
+	return storeFeed(feed, db)
 }
 
 //iterate over all feed sources in feedStore
-func addAllFeeds(feedparser *gofeed.Parser) bool {
+func addAllFeeds(feedparser *gofeed.Parser, db *sql.DB) bool {
 	var waitGroup sync.WaitGroup
 	for _, element := range feedStore {
 		waitGroup.Add(1)
 		go func(element string, feedparser *gofeed.Parser) {
-			addFeed(element, feedparser)
+			addFeed(element, feedparser, db)
 			waitGroup.Done()
 		}(element, feedparser)
 	}
@@ -85,16 +103,14 @@ func addAllFeeds(feedparser *gofeed.Parser) bool {
 }
 
 func main() {
+	debugPrint("Creating feed parser")
 	feedparser := gofeed.NewParser()
 
-	if debug {
-		println(len(database))
-	}
-	addAllFeeds(feedparser)
+	debugPrint("Initializing DB")
+	db := initDB()
 
-	if debug {
-		println(len(database))
-		println("hey its working.\n")
-		fmt.Println("databse: ", database)
-	}
+	debugPrint("Adding feeds")
+	addAllFeeds(feedparser, db)
+
+	debugPrint("hey its working.\n")
 }
