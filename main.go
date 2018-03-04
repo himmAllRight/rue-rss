@@ -1,8 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
+
 	//"fmt"
 
 	"github.com/mmcdole/gofeed"
@@ -41,7 +40,7 @@ func initDB() *sql.DB {
 
 	// Create Table
 	debugPrint("Creating Table")
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feeddata (id ITNEGER PRIMARY KEY, feedname TEXT, url TEXT, read INTEGER)")
+	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feeddata (id INTEGER PRIMARY KEY, feedname TEXT,  postname TEXT, posturl TEXT, publishdate TEXT, postdescription TEXT, postcontent TEXT)")
 	debugPrint("Exec Table Creation")
 	statement.Exec()
 
@@ -72,15 +71,16 @@ func storeFeed(feed *gofeed.Feed, db *sql.DB) bool {
 		println("Storing Feeds for: ", feed.Title)
 	}
 	for i := 0; i < len(feed.Items); i++ {
+		feedItem := feed.Items[i]
 		if debug {
-			println("Adding entry: ", feed.Items[i].Title)
+			println("Adding entry: ", feedItem.Title)
 		}
 
 		// database[uniqueIdentifier(feed.Items[i])] = feed.Items[i]
 		debugPrint("Prepare statement")
-		statement, _ := db.Prepare("INSERT INTO feeddata (feedname, url, read) VALUES (?, ?, ?)")
+		statement, _ := db.Prepare("INSERT INTO feeddata (feedname, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?)")
 		debugPrint("Exec Insert")
-		statement.Exec(feed.Title, feed.FeedLink, 0)
+		statement.Exec(feed.Title, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
 	}
 	return true
 }
@@ -99,19 +99,6 @@ func addAllFeeds(feedparser *gofeed.Parser, db *sql.DB) bool {
 	return true
 }
 
-func printFeedDB(db *sql.DB) {
-	var id int
-	var feedname string
-	var url string
-	var read int
-	rows, _ := db.Query("SELECT id, feedname, url, read FROM feeddata")
-
-	for rows.Next() {
-		rows.Scan(&id, &feedname, &url, &read)
-		fmt.Println(strconv.Itoa(id) + ": " + feedname + " [" + url + "] | " + strconv.Itoa(read))
-	}
-}
-
 func main() {
 	debugPrint("Creating feed parser")
 	feedparser := gofeed.NewParser()
@@ -123,7 +110,6 @@ func main() {
 	addAllFeeds(feedparser, db)
 
 	debugPrint("Printing DB Contents")
-	printFeedDB(db)
 
 	debugPrint("hey its working.\n")
 }
