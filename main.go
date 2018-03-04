@@ -1,8 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"strconv"
 	//"fmt"
-	"sync"
 
 	"github.com/mmcdole/gofeed"
 
@@ -76,7 +77,9 @@ func storeFeed(feed *gofeed.Feed, db *sql.DB) bool {
 		}
 
 		// database[uniqueIdentifier(feed.Items[i])] = feed.Items[i]
-		statement, _ := db.Prepare("INSERT INTO feeds (feedname, url, lastread) VALUES (?, ?, ?)")
+		debugPrint("Prepare statement")
+		statement, _ := db.Prepare("INSERT INTO feeddata (feedname, url, read) VALUES (?, ?, ?)")
+		debugPrint("Exec Insert")
 		statement.Exec(feed.Title, feed.FeedLink, 0)
 	}
 	return true
@@ -90,16 +93,23 @@ func addFeed(url string, feedparser *gofeed.Parser, db *sql.DB) bool {
 
 //iterate over all feed sources in feedStore
 func addAllFeeds(feedparser *gofeed.Parser, db *sql.DB) bool {
-	var waitGroup sync.WaitGroup
 	for _, element := range feedStore {
-		waitGroup.Add(1)
-		go func(element string, feedparser *gofeed.Parser) {
-			addFeed(element, feedparser, db)
-			waitGroup.Done()
-		}(element, feedparser)
+		addFeed(element, feedparser, db)
 	}
-	waitGroup.Wait()
 	return true
+}
+
+func printFeedDB(db *sql.DB) {
+	var id int
+	var feedname string
+	var url string
+	var read int
+	rows, _ := db.Query("SELECT id, feedname, url, read FROM feeddata")
+
+	for rows.Next() {
+		rows.Scan(&id, &feedname, &url, &read)
+		fmt.Println(strconv.Itoa(id) + ": " + feedname + " [" + url + "] | " + strconv.Itoa(read))
+	}
 }
 
 func main() {
@@ -111,6 +121,9 @@ func main() {
 
 	debugPrint("Adding feeds")
 	addAllFeeds(feedparser, db)
+
+	debugPrint("Printing DB Contents")
+	printFeedDB(db)
 
 	debugPrint("hey its working.\n")
 }
