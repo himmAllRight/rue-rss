@@ -64,7 +64,7 @@ func createFeed(url string, feedparser *gofeed.Parser) *gofeed.Feed {
 }
 
 // Add feed contents to DB
-func storeFeed(feed *gofeed.Feed, db *sql.DB) bool {
+func storeFeed(url string, feed *gofeed.Feed, db *sql.DB) bool {
 	if debug {
 		println("Storing Feeds for: ", feed.Title)
 	}
@@ -78,7 +78,7 @@ func storeFeed(feed *gofeed.Feed, db *sql.DB) bool {
 		debugPrint("Prepare statement")
 		statement, _ := db.Prepare("INSERT INTO feeddata (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)")
 		debugPrint("Exec Insert")
-		statement.Exec(feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
+		statement.Exec(feed.Title, url, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
 	}
 	return true
 }
@@ -86,7 +86,7 @@ func storeFeed(feed *gofeed.Feed, db *sql.DB) bool {
 // Create a Feed and at it to DB
 func addFeed(url string, feedparser *gofeed.Parser, db *sql.DB) bool {
 	feed := createFeed(url, feedparser)
-	return storeFeed(feed, db)
+	return storeFeed(url, feed, db)
 }
 
 //iterate over all feed sources in feedStore
