@@ -18,8 +18,6 @@ import (
 //
 //
 
-var database = make(map[string]*gofeed.Item)
-
 var debug = true
 
 var feedStore = []string{
@@ -40,7 +38,7 @@ func initDB() *sql.DB {
 
 	// Create Table
 	debugPrint("Creating Table")
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feeddata (id INTEGER PRIMARY KEY, feedname TEXT,  postname TEXT, posturl TEXT, publishdate TEXT, postdescription TEXT, postcontent TEXT)")
+	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feeddata (id INTEGER PRIMARY KEY,feedname TEXT,feedurl TEXT,postname TEXT,posturl TEXT,publishdate TEXT,postdescription TEXT,postcontent TEXT)")
 	debugPrint("Exec Table Creation")
 	statement.Exec()
 
@@ -78,9 +76,9 @@ func storeFeed(feed *gofeed.Feed, db *sql.DB) bool {
 
 		// database[uniqueIdentifier(feed.Items[i])] = feed.Items[i]
 		debugPrint("Prepare statement")
-		statement, _ := db.Prepare("INSERT INTO feeddata (feedname, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?)")
+		statement, _ := db.Prepare("INSERT INTO feeddata (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)")
 		debugPrint("Exec Insert")
-		statement.Exec(feed.Title, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
+		statement.Exec(feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
 	}
 	return true
 }
