@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 
 	//"fmt"
 
@@ -65,8 +66,11 @@ func createFeed(url string, feedparser *gofeed.Parser) *gofeed.Feed {
 
 // Add feed contents to DB
 func storeFeed(url string, feed *gofeed.Feed, db *sql.DB) bool {
+	feedPostURLs := getFeedPostURLs(url, db)
 	if debug {
 		println("Storing Feeds for: ", feed.Title)
+		println("Feed URLs already in DB:")
+		printFeeds(feedPostURLs)
 	}
 	for i := 0; i < len(feed.Items); i++ {
 		feedItem := feed.Items[i]
@@ -97,6 +101,46 @@ func addAllFeeds(feedparser *gofeed.Parser, db *sql.DB) bool {
 	return true
 }
 
+// Gets all the post URLs for a feed
+func getFeedPostURLs(feedURL string, db *sql.DB) *sql.Rows {
+	rows, _ := db.Query("SELECT posturl FROM feeddata WHERE feedurl='" + feedURL + "'")
+	return rows
+}
+
+func printFeeds(feedRows *sql.Rows) {
+	var feedurl string
+	for feedRows.Next() {
+		feedRows.Scan(&feedurl)
+		fmt.Println("Feed url: " + feedurl)
+	}
+}
+
+// Querys the DB and returns false if no results, or true if a result
+func sqlDoesContain(query string, db *sql.DB) bool {
+	rows, _ := db.Query(query)
+	defer rows.Close()
+
+	inResult := false
+
+	for rows.Next() {
+		inResult = true
+	}
+
+	return inResult
+}
+
+func sqlTestPrint(db *sql.DB) {
+	rows, _ := db.Query("SELECT posturl FROM feeddata WHERE posturl='" + "http://ryan.himmelwright.net/post/solus-to-fedora/" + "'")
+	defer rows.Close()
+
+	var feedurl string
+	for rows.Next() {
+		rows.Scan(&feedurl)
+		fmt.Println("Does this case hit?")
+		fmt.Println("Feed url: " + feedurl)
+	}
+}
+
 func main() {
 	debugPrint("Creating feed parser")
 	feedparser := gofeed.NewParser()
@@ -107,7 +151,9 @@ func main() {
 	debugPrint("Adding feeds")
 	addAllFeeds(feedparser, db)
 
-	debugPrint("Printing DB Contents")
+	debugPrint("sqlTestPrint")
+	sqlTestPrint(db)
+	println(sqlDoesContain("SELECT posturl FROM feedData WHERE posturl='http://ryan.himmelwright.net/post/solus-to-fedora2/'", db))
 
 	debugPrint("hey its working.\n")
 }
