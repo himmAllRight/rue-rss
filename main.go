@@ -23,6 +23,7 @@ var debug = true
 
 var feedStore = []string{
 	"http://www.commitstrip.com/en/feed/",
+	//"http://localhost:1313/post/index.xml",
 	"http://ryan.himmelwright.net/post/index.xml",
 	"http://www.wuxiaworld.com/feed/"}
 
@@ -68,27 +69,25 @@ func createFeed(url string, feedparser *gofeed.Parser) *gofeed.Feed {
 func storeFeed(url string, feed *gofeed.Feed, db *sql.DB) bool {
 	feedPostURLs := getFeedPostURLs(url, db)
 	if debug {
-		println("Storing Feeds for: ", feed.Title)
-		println("Feed URLs already in DB:")
+		println("\nStoring Feeds for: ", feed.Title)
+		println("Feed URLs already in DB (So not adding):")
 		printFeeds(feedPostURLs)
 	}
 	for i := 0; i < len(feed.Items); i++ {
 		feedItem := feed.Items[i]
-		if debug {
-			println("Adding entry: ", feedItem.Title)
-		}
 
 		// database[uniqueIdentifier(feed.Items[i])] = feed.Items[i]
-		debugPrint("Pre IF Condition")
-		println(!(sqlDoesContain("SELECT posturl FROM feedData WHERE posturl='"+feedItem.Link+"'", db)))
 
+		// If feed post not already in table, add it
 		if !(sqlDoesContain("SELECT posturl FROM feedData WHERE posturl='"+feedItem.Link+"'", db)) {
+			if debug {
+				println("Adding entry: ", feedItem.Title, " [", feedItem.Link, "]")
+			}
 			debugPrint("Prepare statement")
 			statement, _ := db.Prepare("INSERT INTO feeddata (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)")
 			debugPrint("Exec Insert")
 			statement.Exec(feed.Title, url, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
 		}
-		debugPrint("Post IF Condition")
 	}
 	return true
 }
@@ -117,7 +116,7 @@ func printFeeds(feedRows *sql.Rows) {
 	var feedurl string
 	for feedRows.Next() {
 		feedRows.Scan(&feedurl)
-		fmt.Println("Feed url: " + feedurl)
+		fmt.Println("\t" + feedurl)
 	}
 }
 
@@ -156,10 +155,6 @@ func main() {
 
 	debugPrint("Adding feeds")
 	addAllFeeds(feedparser, db)
-
-	debugPrint("sqlTestPrint")
-	sqlTestPrint(db)
-	println(!(sqlDoesContain("SELECT posturl FROM feedData WHERE posturl='http://ryan.himmelwright.net/post/solus-to-fedora2/'", db)))
 
 	debugPrint("hey its working.\n")
 }
