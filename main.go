@@ -79,10 +79,16 @@ func storeFeed(url string, feed *gofeed.Feed, db *sql.DB) bool {
 		}
 
 		// database[uniqueIdentifier(feed.Items[i])] = feed.Items[i]
-		debugPrint("Prepare statement")
-		statement, _ := db.Prepare("INSERT INTO feeddata (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)")
-		debugPrint("Exec Insert")
-		statement.Exec(feed.Title, url, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
+		debugPrint("Pre IF Condition")
+		println(!(sqlDoesContain("SELECT posturl FROM feedData WHERE posturl='"+feedItem.Link+"'", db)))
+
+		if !(sqlDoesContain("SELECT posturl FROM feedData WHERE posturl='"+feedItem.Link+"'", db)) {
+			debugPrint("Prepare statement")
+			statement, _ := db.Prepare("INSERT INTO feeddata (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)")
+			debugPrint("Exec Insert")
+			statement.Exec(feed.Title, url, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
+		}
+		debugPrint("Post IF Condition")
 	}
 	return true
 }
@@ -153,7 +159,7 @@ func main() {
 
 	debugPrint("sqlTestPrint")
 	sqlTestPrint(db)
-	println(sqlDoesContain("SELECT posturl FROM feedData WHERE posturl='http://ryan.himmelwright.net/post/solus-to-fedora2/'", db))
+	println(!(sqlDoesContain("SELECT posturl FROM feedData WHERE posturl='http://ryan.himmelwright.net/post/solus-to-fedora2/'", db)))
 
 	debugPrint("hey its working.\n")
 }
