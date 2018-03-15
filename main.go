@@ -38,7 +38,13 @@ func initDB() *sql.DB {
 	debugPrint("Opening DB File")
 	database, _ := sql.Open("sqlite3", "./testdb.db")
 
-	// Create Table
+	// Create Feed Table
+	debugPrint("Creating Feed Table")
+	feedStoreInitStatement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feedstore (id INTEGER PRIMARY KEY,feedname TEXT,feedurl TEXT, category TEXT)")
+	debugPrint("Exec Table Creation")
+	feedStoreInitStatement.Exec()
+
+	// Create Data Table
 	debugPrint("Creating Table")
 	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feeddata (id INTEGER PRIMARY KEY,feedname TEXT,feedurl TEXT,postname TEXT,posturl TEXT,publishdate TEXT,postdescription TEXT,postcontent TEXT)")
 	debugPrint("Exec Table Creation")
@@ -52,11 +58,6 @@ func initDB() *sql.DB {
 func addFeedSource(newURL string) bool {
 	feedStore = append(feedStore, newURL)
 	return true
-}
-
-// generates the items key idetifier
-func uniqueIdentifier(feedItem *gofeed.Item) string {
-	return feedItem.Link
 }
 
 // Create a new feed item from a url
@@ -75,8 +76,6 @@ func storeFeed(url string, feed *gofeed.Feed, db *sql.DB) bool {
 	}
 	for i := 0; i < len(feed.Items); i++ {
 		feedItem := feed.Items[i]
-
-		// database[uniqueIdentifier(feed.Items[i])] = feed.Items[i]
 
 		// If feed post not already in table, add it
 		if !(sqlDoesContain("SELECT posturl FROM feedData WHERE posturl='"+feedItem.Link+"'", db)) {
