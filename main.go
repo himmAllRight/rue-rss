@@ -40,13 +40,13 @@ func initDB() *sql.DB {
 
 	// Create Feed Table
 	debugPrint("Creating Feed Table")
-	feedStoreInitStatement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feedstore (id INTEGER PRIMARY KEY,feedname TEXT,feedurl TEXT, category TEXT)")
+	feedStoreInitStatement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feedStore (id INTEGER PRIMARY KEY,feedurl TEXT, category TEXT)")
 	debugPrint("Exec Table Creation")
 	feedStoreInitStatement.Exec()
 
 	// Create Data Table
 	debugPrint("Creating Table")
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feeddata (id INTEGER PRIMARY KEY,feedname TEXT,feedurl TEXT,postname TEXT,posturl TEXT,publishdate TEXT,postdescription TEXT,postcontent TEXT)")
+	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feedData (id INTEGER PRIMARY KEY,feedname TEXT,feedurl TEXT,postname TEXT,posturl TEXT,publishdate TEXT,postdescription TEXT,postcontent TEXT)")
 	debugPrint("Exec Table Creation")
 	statement.Exec()
 
@@ -54,9 +54,24 @@ func initDB() *sql.DB {
 	return (database)
 }
 
+// Test add Feed Source
+func testAddFeedSource(db *sql.DB) bool {
+	for _, url := range feedStore {
+		addFeedSource(url, "cat", db)
+	}
+	return true
+}
+
 // takes a url that points to a feed and adds it to the the pool of feed sources
-func addFeedSource(newURL string) bool {
-	feedStore = append(feedStore, newURL)
+func addFeedSource(newURL string, category string, db *sql.DB) bool {
+	// If the feed store doesn't contain feed, add it
+	if !(sqlDoesContain("SELECT feedurl FROM feedStore WHERE feedurl='"+newURL+"'", db)) {
+		if debug {
+			println("Adding feed to feed store: ", newURL, " [", category, "]")
+		}
+		statement, _ := db.Prepare("INSERT INTO feedStore (feedurl, category) VALUES (?, ?)")
+		statement.Exec(newURL, category)
+	}
 	return true
 }
 
@@ -151,6 +166,9 @@ func main() {
 
 	debugPrint("Initializing DB")
 	db := initDB()
+
+	debugPrint("Test Add to Feedstore")
+	testAddFeedSource(db)
 
 	debugPrint("Adding feeds")
 	addAllFeeds(feedparser, db)
