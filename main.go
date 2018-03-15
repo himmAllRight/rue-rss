@@ -23,7 +23,7 @@ var debug = true
 
 var feedStore = []string{
 	"http://www.commitstrip.com/en/feed/",
-	//"http://localhost:1313/post/index.xml",
+	"http://localhost:1313/post/index.xml",
 	"http://ryan.himmelwright.net/post/index.xml",
 	"http://www.wuxiaworld.com/feed/"}
 
@@ -35,19 +35,14 @@ func debugPrint(str string) {
 }
 
 func initDB() *sql.DB {
-	debugPrint("Opening DB File")
 	database, _ := sql.Open("sqlite3", "./testdb.db")
 
 	// Create Feed Table
-	debugPrint("Creating Feed Table")
 	feedStoreInitStatement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feedStore (id INTEGER PRIMARY KEY,feedurl TEXT, category TEXT)")
-	debugPrint("Exec Table Creation")
 	feedStoreInitStatement.Exec()
 
 	// Create Data Table
-	debugPrint("Creating Table")
 	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feedData (id INTEGER PRIMARY KEY,feedname TEXT,feedurl TEXT,postname TEXT,posturl TEXT,publishdate TEXT,postdescription TEXT,postcontent TEXT)")
-	debugPrint("Exec Table Creation")
 	statement.Exec()
 
 	// Return db ptr
@@ -89,6 +84,7 @@ func storeFeed(url string, feed *gofeed.Feed, db *sql.DB) bool {
 		println("Feed URLs already in DB (So not adding):")
 		printFeeds(feedPostURLs)
 	}
+	println("Adding Feeds:")
 	for i := 0; i < len(feed.Items); i++ {
 		feedItem := feed.Items[i]
 
@@ -97,9 +93,7 @@ func storeFeed(url string, feed *gofeed.Feed, db *sql.DB) bool {
 			if debug {
 				println("Adding entry: ", feedItem.Title, " [", feedItem.Link, "]")
 			}
-			debugPrint("Prepare statement")
 			statement, _ := db.Prepare("INSERT INTO feeddata (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)")
-			debugPrint("Exec Insert")
 			statement.Exec(feed.Title, url, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
 		}
 	}
@@ -114,6 +108,18 @@ func addFeed(url string, feedparser *gofeed.Parser, db *sql.DB) bool {
 
 //iterate over all feed sources in feedStore
 func addAllFeeds(feedparser *gofeed.Parser, db *sql.DB) bool {
+	// Get feed urls from feedStore table
+	rows, _ := db.Query("SELECT feedurl FROM feedStore")
+	defer rows.Close()
+
+	// Why did this slow it down SOOOOOO much?
+	// var feedurl string
+	// for rows.Next() {
+	// 	rows.Scan(&feedurl)
+	// 	fmt.Println("Feed url: " + feedurl)
+	// 	addFeed(feedurl, feedparser, db)
+	// }
+
 	for _, element := range feedStore {
 		addFeed(element, feedparser, db)
 	}
@@ -149,8 +155,10 @@ func sqlDoesContain(query string, db *sql.DB) bool {
 }
 
 func sqlTestPrint(db *sql.DB) {
-	rows, _ := db.Query("SELECT posturl FROM feeddata WHERE posturl='" + "http://ryan.himmelwright.net/post/solus-to-fedora/" + "'")
+	rows, _ := db.Query("SELECT feedurl FROM feedStore")
 	defer rows.Close()
+
+	println("in sqlTestPrint")
 
 	var feedurl string
 	for rows.Next() {
@@ -169,6 +177,8 @@ func main() {
 
 	debugPrint("Test Add to Feedstore")
 	testAddFeedSource(db)
+
+	sqlTestPrint(db)
 
 	debugPrint("Adding feeds")
 	addAllFeeds(feedparser, db)
