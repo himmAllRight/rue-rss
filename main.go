@@ -74,12 +74,17 @@ func addFeedSource(newURL string, category string, db *sql.DB) bool {
 // Returns the store feeds
 func getStoreFeeds(db *sql.DB) []string {
 	debugPrint("Getting feeds from store")
-	var feedStore []string
 
 	// Get feed urls from feedStore table
+	var size int
 	rows, _ := db.Query("SELECT feedurl FROM feedStore")
 	defer rows.Close()
+	numRows, _ := db.Query("SELECT COUNT(*) FROM feedStore")
+	defer numRows.Close()
+	numRows.Scan(&size)
 
+	feedStore := make([]string, size)
+	fmt.Println(size)
 	// Add feeds to feedstore
 	var feedurl string
 	i := 0
