@@ -21,7 +21,8 @@ import (
 
 var debug = true
 
-var feedStore = []string{
+// Test feed store to load up with new runs
+var testFeedStore = []string{
 	"http://www.commitstrip.com/en/feed/",
 	"http://localhost:1313/post/index.xml",
 	"http://ryan.himmelwright.net/post/index.xml",
@@ -51,7 +52,7 @@ func initDB() *sql.DB {
 
 // Test add Feed Source
 func testAddFeedSource(db *sql.DB) bool {
-	for _, url := range feedStore {
+	for _, url := range testFeedStore {
 		addFeedSource(url, "cat", db)
 	}
 	return true
@@ -68,6 +69,28 @@ func addFeedSource(newURL string, category string, db *sql.DB) bool {
 		statement.Exec(newURL, category)
 	}
 	return true
+}
+
+// Returns the store feeds
+func getStoreFeeds(db *sql.DB) []string {
+	debugPrint("Getting feeds from store")
+	var feedStore []string
+
+	// Get feed urls from feedStore table
+	rows, _ := db.Query("SELECT feedurl FROM feedStore")
+	defer rows.Close()
+
+	// Add feeds to feedstore
+	var feedurl string
+	i := 0
+	for rows.Next() {
+		rows.Scan(&feedurl)
+		fmt.Println("Feed url: " + feedurl)
+		feedStore[i] = feedurl
+		i = i + 1
+	}
+
+	return feedStore
 }
 
 // Create a new feed item from a url
@@ -108,19 +131,13 @@ func addFeed(url string, feedparser *gofeed.Parser, db *sql.DB) bool {
 
 //iterate over all feed sources in feedStore
 func addAllFeeds(feedparser *gofeed.Parser, db *sql.DB) bool {
-	// Get feed urls from feedStore table
-	rows, _ := db.Query("SELECT feedurl FROM feedStore")
-	defer rows.Close()
+	// Get feeds from DB
+	feedStore := getStoreFeeds(db)
 
-	// Why did this slow it down SOOOOOO much?
-	// var feedurl string
-	// for rows.Next() {
-	// 	rows.Scan(&feedurl)
-	// 	fmt.Println("Feed url: " + feedurl)
-	// 	addFeed(feedurl, feedparser, db)
-	// }
-
+	debugPrint("Feed Store")
 	for _, element := range feedStore {
+		debugPrint(element)
+		fmt.Println("Feed url: " + element)
 		addFeed(element, feedparser, db)
 	}
 	return true
@@ -163,7 +180,6 @@ func sqlTestPrint(db *sql.DB) {
 	var feedurl string
 	for rows.Next() {
 		rows.Scan(&feedurl)
-		fmt.Println("Does this case hit?")
 		fmt.Println("Feed url: " + feedurl)
 	}
 }
@@ -178,10 +194,10 @@ func main() {
 	debugPrint("Test Add to Feedstore")
 	testAddFeedSource(db)
 
-	sqlTestPrint(db)
-
 	debugPrint("Adding feeds")
 	addAllFeeds(feedparser, db)
+
+	sqlTestPrint(db)
 
 	debugPrint("hey its working.\n")
 }
