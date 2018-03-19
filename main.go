@@ -13,10 +13,9 @@ import (
 )
 
 // TODO
-// 1. shift database to be an actual database
-// 2. implement interface for multiple rss urls
+// 1. [DONE] shift database to be an actual database
+// 2. [DONE] implement interface for multiple rss urls
 // 3. implement a loop to check feeds every XX minutes
-//
 //
 
 var debug = true
