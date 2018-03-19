@@ -79,10 +79,10 @@ func getStoreFeeds(db *sql.DB) []string {
 	var size int
 	rows, _ := db.Query("SELECT feedurl FROM feedStore")
 	defer rows.Close()
-	numRows, _ := db.Query("SELECT COUNT(*) FROM feedStore")
-	defer numRows.Close()
+	numRows := db.QueryRow("SELECT COUNT(*) FROM feedStore")
 	numRows.Scan(&size)
 
+	fmt.Println(size)
 	feedStore := make([]string, size)
 	fmt.Println(size)
 	// Add feeds to feedstore
@@ -197,7 +197,8 @@ func main() {
 	db := initDB()
 
 	debugPrint("Test Add to Feedstore")
-	testAddFeedSource(db)
+	// FOR NOW, need this line when creating a new DB to add the test feeds
+	//testAddFeedSource(db)
 
 	debugPrint("Adding feeds")
 	addAllFeeds(feedparser, db)
