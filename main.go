@@ -29,4 +29,6 @@ func main() {
 	sqlTestPrint(db)
 
 	debugPrint("hey its working.\n")
+
+	startServer()
 }
