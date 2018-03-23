@@ -30,5 +30,5 @@ func main() {
 
 	debugPrint("hey its working.\n")
 
-	startServer()
+	startServer(db)
 }

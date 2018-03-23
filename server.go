@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -18,7 +19,7 @@ type feedEntry struct {
 }
 
 //addFeedSource
-func startServer() {
+func startServer(db *sql.DB) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
 	})
@@ -42,6 +43,7 @@ func startServer() {
 		}
 		defer req.Body.Close()
 		log.Println(t)
+		addFeedSource(t.FeedURL, t.Category, db)
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
