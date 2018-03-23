@@ -44,6 +44,7 @@ func startServer(db *sql.DB) {
 		defer req.Body.Close()
 		log.Println(t)
 		addFeedSource(t.FeedURL, t.Category, db)
+		fmt.Fprintf(rw, "Success! The feed has been added\n")
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
