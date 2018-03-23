@@ -8,13 +8,13 @@ import (
 	"net/http"
 )
 
-type test_struct struct {
+type testStruct struct {
 	Test string
 }
 
-type feed_entry struct {
-	feedURL  string
-	category string
+type feedEntry struct {
+	FeedURL  string
+	Category string
 }
 
 //addFeedSource
@@ -25,7 +25,7 @@ func startServer() {
 
 	http.HandleFunc("/test", func(rw http.ResponseWriter, req *http.Request) {
 		decoder := json.NewDecoder(req.Body)
-		var t test_struct
+		var t testStruct
 		err := decoder.Decode(&t)
 		if err != nil {
 			panic(err)
@@ -35,7 +35,7 @@ func startServer() {
 	})
 	http.HandleFunc("/add-feed", func(rw http.ResponseWriter, req *http.Request) {
 		decoder := json.NewDecoder(req.Body)
-		var t feed_entry
+		var t feedEntry
 		err := decoder.Decode(&t)
 		if err != nil {
 			panic(err)
