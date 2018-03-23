@@ -23,7 +23,7 @@ var debug = true
 // Test feed store to load up with new runs
 var testFeedStore = []string{
 	"http://www.commitstrip.com/en/feed/",
-	"http://localhost:1313/post/index.xml",
+	//"http://localhost:1313/post/index.xml",
 	"http://ryan.himmelwright.net/post/index.xml",
 	"http://www.wuxiaworld.com/feed/"}
 
@@ -197,7 +197,7 @@ func main() {
 
 	debugPrint("Test Add to Feedstore")
 	// FOR NOW, need this line when creating a new DB to add the test feeds
-	//testAddFeedSource(db)
+	testAddFeedSource(db)
 
 	debugPrint("Adding feeds")
 	addAllFeeds(feedparser, db)
