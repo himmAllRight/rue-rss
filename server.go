@@ -62,9 +62,23 @@ func startServer(db *sql.DB) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
 	})
-
+	http.HandleFunc("/feed-store", func(w http.ResponseWriter, r *http.Request) {
+		feedStore := getStoreFeeds(db)
+		fmt.Fprintf(w, "%q", feedStore)
+	})
 	http.HandleFunc("/test", apiHandler)
-	http.HandleFunc("/add-feed", addFeedHandler)
+	http.HandleFunc("/add-feed", func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		var t feedEntry
+		err := decoder.Decode(&t)
+		if err != nil {
+			panic(err)
+		}
+		defer r.Body.Close()
+		log.Println(t)
+		addFeedSource(t.FeedURL, t.Category, db)
+		fmt.Fprintf(w, "Success! The feed has been added\n")
+	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
