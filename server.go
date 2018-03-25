@@ -74,10 +74,26 @@ func addFeedHandler(d withDB) http.Handler {
 	})
 }
 
+// Adds a new feed to the DB.
+func getFeedPostURLsHandler(d withDB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		var t feedEntry
+		err := decoder.Decode(&t)
+		if err != nil {
+			panic(err)
+		}
+		defer r.Body.Close()
+		postURLrows := getFeedPostURLs(t.FeedURL, d.db)
+		printFeeds(postURLrows)
+		log.Println(postURLrows)
+	})
+}
+
 // Prints out the Contents of the feedstore table
 func feedStoreHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		feedStore := getStoreFeeds(d.db)
+		feedStore := getSQLDataStrings("feedurl", "feedStore", d.db)
 		fmt.Fprintf(w, "%q", feedStore)
 	})
 }
@@ -98,6 +114,7 @@ func startServer(db *sql.DB) {
 	// Handler conditions
 	h.Handle("/feed-store", feedStoreHandler(withDB(d)))
 	h.Handle("/add-feed", withLog(addFeedHandler(withDB(d))))
+	h.Handle("/feed-post-urls", withLog(getFeedPostURLsHandler(withDB(d))))
 
 	h.HandleFunc("/test", apiHandler) // Simple API test
 	h.HandleFunc("/", noMatchHandler) // No Match condition

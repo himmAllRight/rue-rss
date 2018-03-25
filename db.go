@@ -62,33 +62,6 @@ func addFeedSource(newURL string, category string, db *sql.DB) bool {
 	return true
 }
 
-// Returns the store feeds
-func getStoreFeeds(db *sql.DB) []string {
-	debugPrint("Getting feeds from store")
-
-	// Get feed urls from feedStore table
-	var size int
-	rows, _ := db.Query("SELECT feedurl FROM feedStore")
-	defer rows.Close()
-	numRows := db.QueryRow("SELECT COUNT(*) FROM feedStore")
-	numRows.Scan(&size)
-
-	fmt.Println(size)
-	feedStore := make([]string, size)
-	fmt.Println(size)
-	// Add feeds to feedstore
-	var feedurl string
-	i := 0
-	for rows.Next() {
-		rows.Scan(&feedurl)
-		fmt.Println("Feed url: " + feedurl)
-		feedStore[i] = feedurl
-		i = i + 1
-	}
-
-	return feedStore
-}
-
 // Create a new feed item from a url
 func createFeed(url string, feedparser *gofeed.Parser) *gofeed.Feed {
 	feed, _ := feedparser.ParseURL(url)
@@ -128,7 +101,7 @@ func addFeed(url string, feedparser *gofeed.Parser, db *sql.DB) bool {
 //iterate over all feed sources in feedStore
 func addAllFeeds(feedparser *gofeed.Parser, db *sql.DB) bool {
 	// Get feeds from DB
-	feedStore := getStoreFeeds(db)
+	feedStore := getSQLDataStrings("feedurl", "feedStore", db)
 
 	debugPrint("Feed Store")
 	for _, element := range feedStore {
@@ -143,6 +116,33 @@ func addAllFeeds(feedparser *gofeed.Parser, db *sql.DB) bool {
 func getFeedPostURLs(feedURL string, db *sql.DB) *sql.Rows {
 	rows, _ := db.Query("SELECT posturl FROM feeddata WHERE feedurl='" + feedURL + "'")
 	return rows
+}
+
+// Converts rows to a slive of strings
+func getSQLDataStrings(selectStatement string, tblName string, db *sql.DB) []string {
+	debugPrint("get SQL Data Strings")
+
+	// Get feed urls from feedStore table
+	var size int
+	rows, _ := db.Query("SELECT " + selectStatement + " FROM " + tblName)
+	defer rows.Close()
+	numRows := db.QueryRow("SELECT COUNT(" + selectStatement + ") FROM " + tblName)
+	numRows.Scan(&size)
+
+	fmt.Println(size)
+	feedStore := make([]string, size)
+	fmt.Println(size)
+	// Add feeds to feedstore
+	var feedurl string
+	i := 0
+	for rows.Next() {
+		rows.Scan(&feedurl)
+		fmt.Println("Feed url: " + feedurl)
+		feedStore[i] = feedurl
+		i = i + 1
+	}
+
+	return feedStore
 }
 
 func printFeeds(feedRows *sql.Rows) {
