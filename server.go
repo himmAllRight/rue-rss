@@ -84,9 +84,9 @@ func getFeedPostURLsHandler(d withDB) http.Handler {
 			panic(err)
 		}
 		defer r.Body.Close()
-		postURLrows := getFeedPostURLs(t.FeedURL, d.db)
-		printFeeds(postURLrows)
-		log.Println(postURLrows)
+		println(t.FeedURL)
+		postURLs := getSQLDataStrings("postURL", "feedData where feedurl=\""+t.FeedURL+"\"", d.db)
+		log.Println(postURLs)
 	})
 }
 
@@ -94,7 +94,8 @@ func getFeedPostURLsHandler(d withDB) http.Handler {
 func feedStoreHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		feedStore := getSQLDataStrings("feedurl", "feedStore", d.db)
-		fmt.Fprintf(w, "%q", feedStore)
+		log.Println(feedStore)
+		fmt.Fprintf(w, "FeedStore: %q", feedStore)
 	})
 }
 

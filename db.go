@@ -121,6 +121,8 @@ func getFeedPostURLs(feedURL string, db *sql.DB) *sql.Rows {
 // Converts rows to a slive of strings
 func getSQLDataStrings(selectStatement string, tblName string, db *sql.DB) []string {
 	debugPrint("get SQL Data Strings")
+	debugPrint(selectStatement)
+	debugPrint(tblName)
 
 	// Get feed urls from feedStore table
 	var size int
