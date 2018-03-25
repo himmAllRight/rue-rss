@@ -49,25 +49,27 @@ func addFeedHandler(rw http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(rw, "Success! The feed has been added\n")
 }
 
-func withLog(next http.Handler) http.Handler {
+func withLog(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Before")
-		next.ServeHTTP(w, r)
+		h.ServeHTTP(w, r) // Call orig
 		log.Println("After")
 	})
 }
 
 // Server
 func startServer(db *sql.DB) {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+	h := http.NewServeMux()
+	// Catch All Condition
+	h.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Undefined request url, %q\n", html.EscapeString(r.URL.Path))
 	})
-	http.HandleFunc("/feed-store", func(w http.ResponseWriter, r *http.Request) {
+	h.HandleFunc("/feed-store", func(w http.ResponseWriter, r *http.Request) {
 		feedStore := getStoreFeeds(db)
 		fmt.Fprintf(w, "%q", feedStore)
 	})
-	http.HandleFunc("/test", apiHandler)
-	http.HandleFunc("/add-feed", func(w http.ResponseWriter, r *http.Request) {
+	h.HandleFunc("/test", apiHandler)
+	h.HandleFunc("/add-feed", func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		var t feedEntry
 		err := decoder.Decode(&t)
@@ -80,6 +82,7 @@ func startServer(db *sql.DB) {
 		fmt.Fprintf(w, "Success! The feed has been added\n")
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	err := http.ListenAndServe(":8080", h)
+	log.Fatal(err)
 
 }
