@@ -11,6 +11,14 @@ import (
 
 type appHandler func(http.ResponseWriter, *http.Request) (int, error)
 
+type dbHandler struct {
+	db *sql.DB
+}
+
+func (d dbHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	sqlTestPrint(d.db)
+}
+
 // Request Structs
 type testStruct struct {
 	Test string
@@ -60,6 +68,9 @@ func withLog(h http.Handler) http.Handler {
 // Server
 func startServer(db *sql.DB) {
 	h := http.NewServeMux()
+
+	d := dbHandler{db}
+
 	// Catch All Condition
 	h.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Undefined request url, %q\n", html.EscapeString(r.URL.Path))
@@ -69,6 +80,7 @@ func startServer(db *sql.DB) {
 		fmt.Fprintf(w, "%q", feedStore)
 	})
 	h.HandleFunc("/test", apiHandler)
+	h.Handle("/db-test", dbHandler(d))
 	h.HandleFunc("/add-feed", func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		var t feedEntry
