@@ -33,27 +33,23 @@ CREATE TABLE IF NOT EXISTS feedData (
 	postcontent TEXT
 )`
 
-type Person struct {
-	FirstName string `db:"first_name"`
-	LastName  string `db:"last_name"`
-	Email     string
+// FeedSource struct that contains a feed source info
+type FeedSource struct {
+	ID       int    `db:"id"`
+	Feedurl  string `db:"feedurl"`
+	Category string `db:"category"`
 }
 
-type feedStore struct {
-	id       int    `db:"id"`
-	feedurl  string `db:"feedurl"`
-	category string `db:"category"`
-}
-
-type feedData struct {
-	id              int
-	feedname        string
-	feedurl         string
-	postname        string
-	posturl         string
-	publishdate     string
-	postdescription string
-	postcontent     string
+// FeedItem struct that contains data for each feed item (ex: post)
+type FeedItem struct {
+	ID              int
+	Feedname        string
+	Feedurl         string
+	Postname        string
+	Posturl         string
+	Publishdate     string
+	Postdescription string
+	Postcontent     string
 }
 
 func sqlxTestMain() {
@@ -65,15 +61,13 @@ func sqlxTestMain() {
 	db.MustExec(schema)
 
 	tx := db.MustBegin()
-	//tx.MustExec("INSERT INTO feedStore (feedurl, category) VALUES ($1, $2)", "http://ryan.himmelwright.net/post/index.xml", "Test")
-	tx.MustExec("INSERT INTO person (first_name, last_name, email) VALUES ($1, $2, $3)", "Ryan", "Himmelwright", "ryan@himmelwright.net")
-	tx.MustExec("INSERT INTO person (first_name, last_name, email) VALUES ($1, $2, $3)", "Rebecca", "Himmelwright", "rebecca@himmelwright.net")
-	tx.NamedExec("INSERT INTO person (first_name, last_name, email) VALUES (:first_name, :last_name, :email)", &Person{"Jane", "Citizen", "jane.citzen@example.com"})
+	tx.MustExec("INSERT INTO feedStore (feedurl, category) VALUES ($1, $2)", "http://ryan.himmelwright.net/post/index.xml", "Test")
 	tx.Commit()
 
-	people := []Person{}
-	err2 := tx.Select(&people, "SELECT * FROM person")
-	fmt.Printf("Error: %+v\n", err2)
-	fmt.Printf("People: %+v\n", people)
+	feeds := []FeedSource{}
+	err3 := db.Select(&feeds, "SELECT * FROM feedStore")
+
+	fmt.Printf("Error: %+v\n", err3)
+	fmt.Printf("People: %+v\n", feeds)
 
 }
