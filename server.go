@@ -9,16 +9,6 @@ import (
 	"net/http"
 )
 
-type appHandler func(http.ResponseWriter, *http.Request) (int, error)
-
-type dbHandler struct {
-	db *sql.DB
-}
-
-func (d dbHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	sqlTestPrint(d.db)
-}
-
 // Request Structs
 type testStruct struct {
 	Test string
@@ -29,7 +19,32 @@ type feedEntry struct {
 	Category string
 }
 
-// Handler Functions
+///////////////////////////////////
+//// Handler Wrapper Functions ////
+///////////////////////////////////
+
+// Struct and method to pass db into handlers
+type withDB struct {
+	db *sql.DB
+}
+
+func (d withDB) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	println("db handler")
+	sqlTestPrint(d.db)
+}
+
+// Wrapper that logs before and after handler. Might be used later.
+func withLog(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("Before")
+		h.ServeHTTP(w, r) // Call orig
+		log.Println("After")
+	})
+}
+
+////////////////////////////
+//// Handler Functions ////
+///////////////////////////
 
 // Generalized handler functions
 func apiHandler(rq http.ResponseWriter, req *http.Request) {
@@ -43,45 +58,9 @@ func apiHandler(rq http.ResponseWriter, req *http.Request) {
 	log.Println(t.Test)
 }
 
-// How can I pass the DB object to the handler function?
-func addFeedHandler(rw http.ResponseWriter, req *http.Request) {
-	decoder := json.NewDecoder(req.Body)
-	var t feedEntry
-	err := decoder.Decode(&t)
-	if err != nil {
-		panic(err)
-	}
-	defer req.Body.Close()
-	log.Println(t)
-	//addFeedSource(t.FeedURL, t.Category, db)
-	fmt.Fprintf(rw, "Success! The feed has been added\n")
-}
-
-func withLog(h http.Handler) http.Handler {
+// Adds a new feed to the DB.
+func addFeedHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Before")
-		h.ServeHTTP(w, r) // Call orig
-		log.Println("After")
-	})
-}
-
-// Server
-func startServer(db *sql.DB) {
-	h := http.NewServeMux()
-
-	d := dbHandler{db}
-
-	// Catch All Condition
-	h.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Undefined request url, %q\n", html.EscapeString(r.URL.Path))
-	})
-	h.HandleFunc("/feed-store", func(w http.ResponseWriter, r *http.Request) {
-		feedStore := getStoreFeeds(db)
-		fmt.Fprintf(w, "%q", feedStore)
-	})
-	h.HandleFunc("/test", apiHandler)
-	h.Handle("/db-test", dbHandler(d))
-	h.HandleFunc("/add-feed", func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		var t feedEntry
 		err := decoder.Decode(&t)
@@ -90,9 +69,38 @@ func startServer(db *sql.DB) {
 		}
 		defer r.Body.Close()
 		log.Println(t)
-		addFeedSource(t.FeedURL, t.Category, db)
+		addFeedSource(t.FeedURL, t.Category, d.db)
 		fmt.Fprintf(w, "Success! The feed has been added\n")
 	})
+}
+
+// Prints out the Contents of the feedstore table
+func feedStoreHandler(d withDB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		feedStore := getStoreFeeds(d.db)
+		fmt.Fprintf(w, "%q", feedStore)
+	})
+}
+
+func noMatchHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Undefined request url, %q\n", html.EscapeString(r.URL.Path))
+}
+
+////////////////////
+//// Server Run ////
+////////////////////
+
+func startServer(db *sql.DB) {
+	h := http.NewServeMux()
+	// Create a db handler obj to pass the db pointer around
+	d := withDB{db}
+
+	// Handler conditions
+	h.Handle("/feed-store", feedStoreHandler(withDB(d)))
+	h.Handle("/add-feed", withLog(addFeedHandler(withDB(d))))
+
+	h.HandleFunc("/test", apiHandler) // Simple API test
+	h.HandleFunc("/", noMatchHandler) // No Match condition
 
 	err := http.ListenAndServe(":8080", h)
 	log.Fatal(err)
