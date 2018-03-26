@@ -53,7 +53,7 @@ type FeedItem struct {
 }
 
 // Init DB
-func xinitDB() (*sqlx.DB, *sqlx.Tx) {
+func xinitDB() *sqlx.DB {
 	db, err := sqlx.Connect("sqlite3", "test-db2.db")
 	if err != nil {
 		log.Fatalln(err)
@@ -61,15 +61,15 @@ func xinitDB() (*sqlx.DB, *sqlx.Tx) {
 
 	db.MustExec(schema)
 
-	tx := db.MustBegin()
-	return db, tx
+	return db
 }
 
 // Add a new feed source to the feedStore table
-func xaddFeedSource(newURL string, category string, db *sqlx.DB, tx *sqlx.Tx) bool {
+func xaddFeedSource(newURL string, category string, db *sqlx.DB) bool {
 	feeds := []FeedSource{}
 	db.Select(&feeds, "SELECT feedurl FROM feedStore where feedurl=$1", newURL)
 	if len(feeds) == 0 {
+		tx := db.MustBegin()
 		tx.MustExec("INSERT INTO feedStore (feedurl, category) VALUES ($1, $2)", newURL, category)
 		tx.Commit()
 		return true
@@ -78,9 +78,9 @@ func xaddFeedSource(newURL string, category string, db *sqlx.DB, tx *sqlx.Tx) bo
 }
 
 func sqlxTestMain() {
-	db, tx := xinitDB()
+	db := xinitDB()
 
-	xaddFeedSource("http://ryan.himmelwright.net/post/index.xml", "Test", db, tx)
+	xaddFeedSource("http://ryan.himmelwright.net/post/index.xml", "Test", db)
 
 	feeds := []FeedSource{}
 	err3 := db.Select(&feeds, "SELECT * FROM feedStore")
