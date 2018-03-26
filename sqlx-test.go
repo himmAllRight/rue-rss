@@ -74,6 +74,18 @@ func xaddFeedSource(newURL string, category string, db *sqlx.DB) bool {
 	return false
 }
 
+func getFeedsForSource(feedSource FeedSource) {
+	feedparser := gofeed.NewParser()
+	feed, err := feedparser.ParseURL(feedSource.Feedurl)
+	if err != nil {
+		println("Error: %s", err)
+	}
+	//feedItems := []FeedItem{}
+	for i := 0; i < len(feed.Items); i++ {
+		println("Adding Feed Item: " + feed.Items[i].Title)
+	}
+}
+
 // Create a feed object from a url string
 func xcreateFeed(url string) (*gofeed.Feed, error) {
 	feedparser := gofeed.NewParser()
@@ -85,17 +97,17 @@ func xcreateFeed(url string) (*gofeed.Feed, error) {
 }
 
 // Copies contents of Feed Item into the Feed Item struct
-func createFeedItemStruct(feed *gofeed.Feed, feedItem *gofeed.Item) FeedItem {
-	return FeedItem{feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content}
-}
+// func createFeedItemStruct(feed *gofeed.Feed, feedItem *gofeed.Item) FeedItem {
+// 	return FeedItem{feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content}
+// }
 
 // Stores the feed item to the DB
-func storeFeedItem(feedItem FeedItem, db *sqlx.DB) bool {
+func storeFeedItem(feed *gofeed.Feed, feedItem *gofeed.Item, db *sqlx.DB) bool {
 	dbFeedItem := []FeedItem{}
-	db.Select(&dbFeedItem, "SELECT posturl FROM feedData where posturl=$1", feedItem.Posturl)
+	db.Select(&dbFeedItem, "SELECT posturl FROM feedData where posturl=$1", feedItem.Link)
 	if len(dbFeedItem) == 0 {
 		tx := db.MustBegin()
-		tx.MustExec("INSERT INTO feedData (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)", feedItem.Feedname, feedItem.Feedurl, feedItem.Postname, feedItem.Posturl, feedItem.Publishdate, feedItem.Postdescription, feedItem.Postcontent)
+		tx.MustExec("INSERT INTO feedData (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)", feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
 		tx.Commit()
 		return true
 	}
@@ -114,8 +126,10 @@ func sqlxTestMain() {
 	fmt.Printf("Feeds: %+v\n", feeds)
 
 	feed, _ := xcreateFeed("http://ryan.himmelwright.net/post/index.xml")
-	feedItem := feed.Items[0]
-	feedObj := createFeedItemStruct(feed, feedItem)
-	storeFeedItem(feedObj, db)
+
+	// Test store feeds
+	storeFeedItem(feed, feed.Items[0], db)
+	storeFeedItem(feed, feed.Items[1], db)
+	storeFeedItem(feed, feed.Items[2], db)
 
 }
