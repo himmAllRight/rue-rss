@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/mmcdole/gofeed"
 )
 
 // DB Schema Def
@@ -17,13 +18,11 @@ CREATE TABLE IF NOT EXISTS person (
 );
 
 CREATE TABLE IF NOT EXISTS feedStore (
-	id INTEGER PRIMARY KEY,
 	feedurl TEXT, 
 	category TEXT
 );
 
 CREATE TABLE IF NOT EXISTS feedData (
-	id INTEGER PRIMARY KEY,
 	feedname TEXT,
 	feedurl TEXT,
 	postname TEXT,
@@ -35,14 +34,12 @@ CREATE TABLE IF NOT EXISTS feedData (
 
 // FeedSource struct that contains a feed source info
 type FeedSource struct {
-	ID       int    `db:"id"`
 	Feedurl  string `db:"feedurl"`
 	Category string `db:"category"`
 }
 
 // FeedItem struct that contains data for each feed item (ex: post)
 type FeedItem struct {
-	ID              int
 	Feedname        string
 	Feedurl         string
 	Postname        string
@@ -77,6 +74,34 @@ func xaddFeedSource(newURL string, category string, db *sqlx.DB) bool {
 	return false
 }
 
+// Create a feed object from a url string
+func xcreateFeed(url string) (*gofeed.Feed, error) {
+	feedparser := gofeed.NewParser()
+	feed, err := feedparser.ParseURL(url)
+	if err != nil {
+		return nil, fmt.Errorf("Feed not found with parser")
+	}
+	return feed, nil
+}
+
+// Copies contents of Feed Item into the Feed Item struct
+func createFeedItemStruct(feed *gofeed.Feed, feedItem *gofeed.Item) FeedItem {
+	return FeedItem{feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content}
+}
+
+// Stores the feed item to the DB
+// func storeFeedItem(feedItem FeedItem, db *sqlx.DB) bool {
+// 	dbFeedItem := []FeedItem{}
+// 	db.Select(&dbFeedItem, "SELECT posturl FROM feedData where posturl=$1", feedItem.Posturl)
+// 	if len(dbFeedItem) == 0 {
+// 		tx := db.MustBegin()
+// 		tx.MustExec("INSERT INTO feedData (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES ()", &feedItem)
+// 		tx.Commit()
+// 		return true
+// 	}
+// 	return false
+// }
+
 func sqlxTestMain() {
 	db := xinitDB()
 
@@ -87,5 +112,10 @@ func sqlxTestMain() {
 
 	fmt.Printf("Error: %+v\n", err3)
 	fmt.Printf("Feeds: %+v\n", feeds)
+
+	// feed, _ := xcreateFeed("http://ryan.himmelwright.net/post/index.xml")
+	// feedItem := feed.Items[0]
+	// feedObj := createFeedItemStruct(feed, feedItem)
+	//storeFeedItem(feedObj, db)
 
 }
