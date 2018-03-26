@@ -90,17 +90,17 @@ func createFeedItemStruct(feed *gofeed.Feed, feedItem *gofeed.Item) FeedItem {
 }
 
 // Stores the feed item to the DB
-// func storeFeedItem(feedItem FeedItem, db *sqlx.DB) bool {
-// 	dbFeedItem := []FeedItem{}
-// 	db.Select(&dbFeedItem, "SELECT posturl FROM feedData where posturl=$1", feedItem.Posturl)
-// 	if len(dbFeedItem) == 0 {
-// 		tx := db.MustBegin()
-// 		tx.MustExec("INSERT INTO feedData (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES ()", &feedItem)
-// 		tx.Commit()
-// 		return true
-// 	}
-// 	return false
-// }
+func storeFeedItem(feedItem FeedItem, db *sqlx.DB) bool {
+	dbFeedItem := []FeedItem{}
+	db.Select(&dbFeedItem, "SELECT posturl FROM feedData where posturl=$1", feedItem.Posturl)
+	if len(dbFeedItem) == 0 {
+		tx := db.MustBegin()
+		tx.MustExec("INSERT INTO feedData (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)", feedItem.Feedname, feedItem.Feedurl, feedItem.Postname, feedItem.Posturl, feedItem.Publishdate, feedItem.Postdescription, feedItem.Postcontent)
+		tx.Commit()
+		return true
+	}
+	return false
+}
 
 func sqlxTestMain() {
 	db := xinitDB()
@@ -113,9 +113,9 @@ func sqlxTestMain() {
 	fmt.Printf("Error: %+v\n", err3)
 	fmt.Printf("Feeds: %+v\n", feeds)
 
-	// feed, _ := xcreateFeed("http://ryan.himmelwright.net/post/index.xml")
-	// feedItem := feed.Items[0]
-	// feedObj := createFeedItemStruct(feed, feedItem)
-	//storeFeedItem(feedObj, db)
+	feed, _ := xcreateFeed("http://ryan.himmelwright.net/post/index.xml")
+	feedItem := feed.Items[0]
+	feedObj := createFeedItemStruct(feed, feedItem)
+	storeFeedItem(feedObj, db)
 
 }
