@@ -1,8 +1,6 @@
 package main
 
 import (
-	"github.com/mmcdole/gofeed"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -12,22 +10,22 @@ import (
 // 3. implement a loop to check feeds every XX minutes
 //
 
-func main() {
-	debugPrint("Creating feed parser")
-	feedparser := gofeed.NewParser()
+var debug = true
 
+// Prints only if debug global is true
+func debugPrint(str string) {
+	if debug {
+		println(str)
+	}
+}
+
+func main() {
 	debugPrint("Initializing DB")
 	db := initDB()
 
-	debugPrint("Test Add to Feedstore")
-	// FOR NOW, need this line when creating a new DB to add the test feeds
-	testAddFeedSource(db)
+	addFeedSource("http://ryan.himmelwright.net/post/index.xml", "Test", db)
 
-	debugPrint("Adding feeds")
-	addAllFeeds(feedparser, db)
-
-	sqlTestPrint(db)
-
+	updateAllFeedSources(db)
 	debugPrint("hey its working.\n")
 
 	startServer(db)

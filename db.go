@@ -2,182 +2,151 @@ package main
 
 import (
 	"fmt"
+	"log"
 
-	"github.com/mmcdole/gofeed"
-
-	"database/sql"
-
+	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/mmcdole/gofeed"
 )
 
-var debug = true
+// DB Schema Def
+var schema = `
+CREATE TABLE IF NOT EXISTS person (
+	first_name text,
+	last_name text,
+	email text
+);
 
-// Test feed store to load up with new runs
-var testFeedStore = []string{
-	"http://www.commitstrip.com/en/feed/",
-	//"http://localhost:1313/post/index.xml",
-	"http://ryan.himmelwright.net/post/index.xml",
-	"http://www.wuxiaworld.com/feed/"}
+CREATE TABLE IF NOT EXISTS feedStore (
+	feedurl TEXT, 
+	category TEXT
+);
 
-// Prints only if debug global is true
-func debugPrint(str string) {
-	if debug {
-		println(str)
+CREATE TABLE IF NOT EXISTS feedData (
+	feedname TEXT,
+	feedurl TEXT,
+	postname TEXT,
+	posturl TEXT,
+	publishdate TEXT,
+	postdescription TEXT,
+	postcontent TEXT
+)`
+
+// FeedSource struct that contains a feed source info
+type FeedSource struct {
+	Feedurl  string `db:"feedurl"`
+	Category string `db:"category"`
+}
+
+// FeedItem struct that contains data for each feed item (ex: post)
+type FeedItem struct {
+	Feedname        string
+	Feedurl         string
+	Postname        string
+	Posturl         string
+	Publishdate     string
+	Postdescription string
+	Postcontent     string
+}
+
+// Init DB
+func initDB() *sqlx.DB {
+	db, err := sqlx.Connect("sqlite3", "test-db2.db")
+	if err != nil {
+		log.Fatalln(err)
 	}
+
+	db.MustExec(schema)
+
+	return db
 }
 
-func initDB() *sql.DB {
-	database, _ := sql.Open("sqlite3", "./testdb.db")
-
-	// Create Feed Table
-	feedStoreInitStatement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feedStore (id INTEGER PRIMARY KEY,feedurl TEXT, category TEXT)")
-	feedStoreInitStatement.Exec()
-
-	// Create Data Table
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS feedData (id INTEGER PRIMARY KEY,feedname TEXT,feedurl TEXT,postname TEXT,posturl TEXT,publishdate TEXT,postdescription TEXT,postcontent TEXT)")
-	statement.Exec()
-
-	// Return db ptr
-	return (database)
-}
-
-// Test add Feed Source
-func testAddFeedSource(db *sql.DB) bool {
-	for _, url := range testFeedStore {
-		addFeedSource(url, "cat", db)
+// Add a new feed source to the feedStore table
+func addFeedSource(newURL string, category string, db *sqlx.DB) bool {
+	feeds := []FeedSource{}
+	db.Select(&feeds, "SELECT feedurl FROM feedStore where feedurl=$1", newURL)
+	if len(feeds) == 0 {
+		tx := db.MustBegin()
+		tx.MustExec("INSERT INTO feedStore (feedurl, category) VALUES ($1, $2)", newURL, category)
+		tx.Commit()
+		return true
 	}
-	return true
+	return false
 }
 
-// takes a url that points to a feed and adds it to the the pool of feed sources
-func addFeedSource(newURL string, category string, db *sql.DB) bool {
-	// If the feed store doesn't contain feed, add it
-	if !(sqlDoesContain("SELECT feedurl FROM feedStore WHERE feedurl='"+newURL+"'", db)) {
-		if debug {
-			println("Adding feed to feed store: ", newURL, " [", category, "]")
-		}
-		statement, _ := db.Prepare("INSERT INTO feedStore (feedurl, category) VALUES (?, ?)")
-		statement.Exec(newURL, category)
+func getFeedsForSource(feedSource FeedSource) {
+	feedparser := gofeed.NewParser()
+	feed, err := feedparser.ParseURL(feedSource.Feedurl)
+	if err != nil {
+		println("Error: %s", err)
 	}
-	return true
-}
-
-// Create a new feed item from a url
-func createFeed(url string, feedparser *gofeed.Parser) *gofeed.Feed {
-	feed, _ := feedparser.ParseURL(url)
-	return feed
-}
-
-// Add feed contents to DB
-func storeFeed(url string, feed *gofeed.Feed, db *sql.DB) bool {
-	feedPostURLs := getFeedPostURLs(url, db)
-	if debug {
-		println("\nStoring Feeds for: ", feed.Title)
-		println("Feed URLs already in DB (So not adding):")
-		printFeeds(feedPostURLs)
-	}
-	println("Adding Feeds:")
+	//feedItems := []FeedItem{}
 	for i := 0; i < len(feed.Items); i++ {
-		feedItem := feed.Items[i]
+		println("Adding Feed Item: " + feed.Items[i].Title)
+	}
+}
 
-		// If feed post not already in table, add it
-		if !(sqlDoesContain("SELECT posturl FROM feedData WHERE posturl='"+feedItem.Link+"'", db)) {
-			if debug {
-				println("Adding entry: ", feedItem.Title, " [", feedItem.Link, "]")
-			}
-			statement, _ := db.Prepare("INSERT INTO feeddata (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)")
-			statement.Exec(feed.Title, url, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
+// Create a feed object from a url string
+func createFeed(url string) (*gofeed.Feed, error) {
+	feedparser := gofeed.NewParser()
+	feed, err := feedparser.ParseURL(url)
+	if err != nil {
+		return nil, fmt.Errorf("Feed not found with parser")
+	}
+	return feed, nil
+}
+
+// Copies contents of Feed Item into the Feed Item struct
+// func createFeedItemStruct(feed *gofeed.Feed, feedItem *gofeed.Item) FeedItem {
+// 	return FeedItem{feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content}
+// }
+
+// Iterates over all feed sources in feedStore table, and adds new feeds for each do the db
+func updateAllFeedSources(db *sqlx.DB) {
+	feedStore := []FeedSource{}
+	db.Select(&feedStore, "SELECT * FROM feedStore")
+
+	for _, feedSourceObj := range feedStore {
+		debugPrint(feedSourceObj.Feedurl)
+		feedSource, err := createFeed(feedSourceObj.Feedurl)
+		if err != nil {
+			println("Error Creating Feed")
+		}
+		storeAllFeedItems(feedSource, db)
+	}
+}
+
+// Stores all of the items for a feed source (if they don't exist)
+func storeAllFeedItems(feed *gofeed.Feed, db *sqlx.DB) {
+	// Iterate over feed items
+	for i := 0; i < len(feed.Items); i++ {
+		addedP := storeFeedItem(feed, feed.Items[i], db)
+		if addedP {
+			debugPrint("Feed Item Added: " + feed.Items[i].Title)
+		} else {
+			debugPrint("Feed Item Not Added: " + feed.Items[i].Title)
 		}
 	}
-	return true
 }
 
-// Create a Feed and at it to DB
-func addFeed(url string, feedparser *gofeed.Parser, db *sql.DB) bool {
-	feed := createFeed(url, feedparser)
-	return storeFeed(url, feed, db)
-}
-
-//iterate over all feed sources in feedStore
-func addAllFeeds(feedparser *gofeed.Parser, db *sql.DB) bool {
-	// Get feeds from DB
-	feedStore := getSQLDataStrings("feedurl", "feedStore", db)
-
-	debugPrint("Feed Store")
-	for _, element := range feedStore {
-		debugPrint(element)
-		fmt.Println("Feed url: " + element)
-		addFeed(element, feedparser, db)
+// Stores the feed item to the DB
+func storeFeedItem(feed *gofeed.Feed, feedItem *gofeed.Item, db *sqlx.DB) bool {
+	dbFeedItem := []FeedItem{}
+	db.Select(&dbFeedItem, "SELECT posturl FROM feedData where posturl=$1", feedItem.Link)
+	if len(dbFeedItem) == 0 {
+		tx := db.MustBegin()
+		tx.MustExec("INSERT INTO feedData (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)", feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
+		tx.Commit()
+		return true
 	}
-	return true
+	return false
 }
 
-// Gets all the post URLs for a feed
-func getFeedPostURLs(feedURL string, db *sql.DB) *sql.Rows {
-	rows, _ := db.Query("SELECT posturl FROM feeddata WHERE feedurl='" + feedURL + "'")
-	return rows
-}
+func sqlxTestMain() {
+	db := initDB()
 
-// Converts rows to a slive of strings
-func getSQLDataStrings(selectStatement string, tblName string, db *sql.DB) []string {
-	debugPrint("get SQL Data Strings")
-	debugPrint(selectStatement)
-	debugPrint(tblName)
+	addFeedSource("http://ryan.himmelwright.net/post/index.xml", "Test", db)
 
-	// Get feed urls from feedStore table
-	var size int
-	rows, _ := db.Query("SELECT " + selectStatement + " FROM " + tblName)
-	defer rows.Close()
-	numRows := db.QueryRow("SELECT COUNT(" + selectStatement + ") FROM " + tblName)
-	numRows.Scan(&size)
+	updateAllFeedSources(db)
 
-	fmt.Println(size)
-	feedStore := make([]string, size)
-	fmt.Println(size)
-	// Add feeds to feedstore
-	var feedurl string
-	i := 0
-	for rows.Next() {
-		rows.Scan(&feedurl)
-		fmt.Println("Feed url: " + feedurl)
-		feedStore[i] = feedurl
-		i = i + 1
-	}
-
-	return feedStore
-}
-
-func printFeeds(feedRows *sql.Rows) {
-	var feedurl string
-	for feedRows.Next() {
-		feedRows.Scan(&feedurl)
-		fmt.Println("\t" + feedurl)
-	}
-}
-
-// Querys the DB and returns false if no results, or true if a result
-func sqlDoesContain(query string, db *sql.DB) bool {
-	rows, _ := db.Query(query)
-	defer rows.Close()
-
-	inResult := false
-
-	for rows.Next() {
-		inResult = true
-	}
-
-	return inResult
-}
-
-func sqlTestPrint(db *sql.DB) {
-	rows, _ := db.Query("SELECT feedurl FROM feedStore")
-	defer rows.Close()
-
-	println("in sqlTestPrint")
-
-	var feedurl string
-	for rows.Next() {
-		rows.Scan(&feedurl)
-		fmt.Println("Feed url: " + feedurl)
-	}
 }

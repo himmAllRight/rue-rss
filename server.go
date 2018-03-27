@@ -1,12 +1,13 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html"
 	"log"
 	"net/http"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // Request Structs
@@ -25,12 +26,11 @@ type feedEntry struct {
 
 // Struct and method to pass db into handlers
 type withDB struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 func (d withDB) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	println("db handler")
-	sqlTestPrint(d.db)
 }
 
 // Wrapper that logs before and after handler. Might be used later.
@@ -75,29 +75,29 @@ func addFeedHandler(d withDB) http.Handler {
 }
 
 // Adds a new feed to the DB.
-func getFeedPostURLsHandler(d withDB) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		var t feedEntry
-		err := decoder.Decode(&t)
-		if err != nil {
-			panic(err)
-		}
-		defer r.Body.Close()
-		println(t.FeedURL)
-		postURLs := getSQLDataStrings("postURL", "feedData where feedurl=\""+t.FeedURL+"\"", d.db)
-		log.Println(postURLs)
-	})
-}
+// func getFeedPostURLsHandler(d withDB) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		decoder := json.NewDecoder(r.Body)
+// 		var t feedEntry
+// 		err := decoder.Decode(&t)
+// 		if err != nil {
+// 			panic(err)
+// 		}
+// 		defer r.Body.Close()
+// 		println(t.FeedURL)
+// 		postURLs := getSQLDataStrings("postURL", "feedData where feedurl=\""+t.FeedURL+"\"", d.db)
+// 		log.Println(postURLs)
+// 	})
+// }
 
 // Prints out the Contents of the feedstore table
-func feedStoreHandler(d withDB) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		feedStore := getSQLDataStrings("feedurl", "feedStore", d.db)
-		log.Println(feedStore)
-		fmt.Fprintf(w, "FeedStore: %q", feedStore)
-	})
-}
+// func feedStoreHandler(d withDB) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		feedStore := getSQLDataStrings("feedurl", "feedStore", d.db)
+// 		log.Println(feedStore)
+// 		fmt.Fprintf(w, "FeedStore: %q", feedStore)
+// 	})
+// }
 
 func noMatchHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Undefined request url, %q\n", html.EscapeString(r.URL.Path))
@@ -107,15 +107,15 @@ func noMatchHandler(w http.ResponseWriter, r *http.Request) {
 //// Server Run ////
 ////////////////////
 
-func startServer(db *sql.DB) {
+func startServer(db *sqlx.DB) {
 	h := http.NewServeMux()
 	// Create a db handler obj to pass the db pointer around
 	d := withDB{db}
 
 	// Handler conditions
-	h.Handle("/feed-store", feedStoreHandler(withDB(d)))
+	//h.Handle("/feed-store", feedStoreHandler(withDB(d)))
 	h.Handle("/add-feed", withLog(addFeedHandler(withDB(d))))
-	h.Handle("/feed-post-urls", withLog(getFeedPostURLsHandler(withDB(d))))
+	//h.Handle("/feed-post-urls", withLog(getFeedPostURLsHandler(withDB(d))))
 
 	h.HandleFunc("/test", apiHandler) // Simple API test
 	h.HandleFunc("/", noMatchHandler) // No Match condition
