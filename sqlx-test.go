@@ -101,6 +101,34 @@ func xcreateFeed(url string) (*gofeed.Feed, error) {
 // 	return FeedItem{feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content}
 // }
 
+// Iterates over all feed sources in feedStore table, and adds new feeds for each do the db
+func updateAllFeedSources(db *sqlx.DB) {
+	feedStore := []FeedSource{}
+	db.Select(&feedStore, "SELECT * FROM feedStore")
+
+	for _, feedSourceObj := range feedStore {
+		debugPrint(feedSourceObj.Feedurl)
+		feedSource, err := xcreateFeed(feedSourceObj.Feedurl)
+		if err != nil {
+			println("Error Creating Feed")
+		}
+		storeAllFeedItems(feedSource, db)
+	}
+}
+
+// Stores all of the items for a feed source (if they don't exist)
+func storeAllFeedItems(feed *gofeed.Feed, db *sqlx.DB) {
+	// Iterate over feed items
+	for i := 0; i < len(feed.Items); i++ {
+		addedP := storeFeedItem(feed, feed.Items[i], db)
+		if addedP {
+			debugPrint("Feed Item Added: " + feed.Items[i].Title)
+		} else {
+			debugPrint("Feed Item Not Added: " + feed.Items[i].Title)
+		}
+	}
+}
+
 // Stores the feed item to the DB
 func storeFeedItem(feed *gofeed.Feed, feedItem *gofeed.Item, db *sqlx.DB) bool {
 	dbFeedItem := []FeedItem{}
@@ -119,17 +147,6 @@ func sqlxTestMain() {
 
 	xaddFeedSource("http://ryan.himmelwright.net/post/index.xml", "Test", db)
 
-	feeds := []FeedSource{}
-	err3 := db.Select(&feeds, "SELECT * FROM feedStore")
-
-	fmt.Printf("Error: %+v\n", err3)
-	fmt.Printf("Feeds: %+v\n", feeds)
-
-	feed, _ := xcreateFeed("http://ryan.himmelwright.net/post/index.xml")
-
-	// Test store feeds
-	storeFeedItem(feed, feed.Items[0], db)
-	storeFeedItem(feed, feed.Items[1], db)
-	storeFeedItem(feed, feed.Items[2], db)
+	updateAllFeedSources(db)
 
 }
