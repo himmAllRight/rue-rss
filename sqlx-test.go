@@ -101,6 +101,19 @@ func xcreateFeed(url string) (*gofeed.Feed, error) {
 // 	return FeedItem{feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content}
 // }
 
+// Stores all of the items for a feed source (if they don't exist)
+func storeAllFeedItems(feed *gofeed.Feed, db *sqlx.DB) {
+	// Iterate over feed items
+	for i := 0; i < len(feed.Items); i++ {
+		addedP := storeFeedItem(feed, feed.Items[i], db)
+		if addedP {
+			debugPrint("Feed Item Added: " + feed.Items[i].Title)
+		} else {
+			debugPrint("Feed Item Not Added: " + feed.Items[i].Title)
+		}
+	}
+}
+
 // Stores the feed item to the DB
 func storeFeedItem(feed *gofeed.Feed, feedItem *gofeed.Item, db *sqlx.DB) bool {
 	dbFeedItem := []FeedItem{}
@@ -132,4 +145,5 @@ func sqlxTestMain() {
 	storeFeedItem(feed, feed.Items[1], db)
 	storeFeedItem(feed, feed.Items[2], db)
 
+	storeAllFeedItems(feed, db)
 }
