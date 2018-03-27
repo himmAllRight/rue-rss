@@ -149,4 +149,5 @@ func sqlxTestMain() {
 
 	updateAllFeedSources(db)
 
+	storeAllFeedItems(feed, db)
 }
