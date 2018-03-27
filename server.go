@@ -74,30 +74,21 @@ func addFeedHandler(d withDB) http.Handler {
 	})
 }
 
-// Adds a new feed to the DB.
-// func getFeedPostURLsHandler(d withDB) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		decoder := json.NewDecoder(r.Body)
-// 		var t feedEntry
-// 		err := decoder.Decode(&t)
-// 		if err != nil {
-// 			panic(err)
-// 		}
-// 		defer r.Body.Close()
-// 		println(t.FeedURL)
-// 		postURLs := getSQLDataStrings("postURL", "feedData where feedurl=\""+t.FeedURL+"\"", d.db)
-// 		log.Println(postURLs)
-// 	})
-// }
-
-// Prints out the Contents of the feedstore table
-// func feedStoreHandler(d withDB) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		feedStore := getSQLDataStrings("feedurl", "feedStore", d.db)
-// 		log.Println(feedStore)
-// 		fmt.Fprintf(w, "FeedStore: %q", feedStore)
-// 	})
-// }
+// Updates all the feed sources in feedStore table
+func updateAllFeedsHandler(d withDB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		var t feedEntry
+		err := decoder.Decode(&t)
+		if err != nil {
+			panic(err)
+		}
+		defer r.Body.Close()
+		log.Println(t)
+		updateAllFeedSources(d.db)
+		fmt.Fprintf(w, "Success! All feed sources have been updated.\n")
+	})
+}
 
 func noMatchHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Undefined request url, %q\n", html.EscapeString(r.URL.Path))
@@ -113,9 +104,8 @@ func startServer(db *sqlx.DB) {
 	d := withDB{db}
 
 	// Handler conditions
-	//h.Handle("/feed-store", feedStoreHandler(withDB(d)))
 	h.Handle("/add-feed", withLog(addFeedHandler(withDB(d))))
-	//h.Handle("/feed-post-urls", withLog(getFeedPostURLsHandler(withDB(d))))
+	h.Handle("/update-all-feeds", withLog(updateAllFeedsHandler(withDB(d))))
 
 	h.HandleFunc("/test", apiHandler) // Simple API test
 	h.HandleFunc("/", noMatchHandler) // No Match condition

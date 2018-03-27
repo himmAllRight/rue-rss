@@ -110,7 +110,8 @@ func updateAllFeedSources(db *sqlx.DB) {
 		debugPrint(feedSourceObj.Feedurl)
 		feedSource, err := createFeed(feedSourceObj.Feedurl)
 		if err != nil {
-			println("Error Creating Feed")
+			debugPrint("Error Creating Feed Item for " + feedSourceObj.Feedurl)
+			return
 		}
 		storeAllFeedItems(feedSource, db)
 	}
