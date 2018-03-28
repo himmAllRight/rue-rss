@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -16,6 +18,13 @@ var debug = true
 func debugPrint(str string) {
 	if debug {
 		println(str)
+	}
+}
+
+// Check error returns
+func checkErr(err error) {
+	if err != nil {
+		log.Fatal("ERROR:", err)
 	}
 }
 
