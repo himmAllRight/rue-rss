@@ -66,6 +66,9 @@ func addFeedSource(newURL string, category string, db *sqlx.DB) bool {
 	feeds := []FeedSource{}
 	db.Select(&feeds, "SELECT feedurl FROM feedStore where feedurl=$1", newURL)
 	if len(feeds) == 0 {
+		newFeed, err := createFeed(newURL)
+		checkErr(err)
+		fmt.Printf("Compare: %q and %q, %q\n", newURL, newFeed.FeedLink, newFeed.Link)
 		tx := db.MustBegin()
 		tx.MustExec("INSERT INTO feedStore (feedurl, category) VALUES ($1, $2)", newURL, category)
 		tx.Commit()
@@ -74,17 +77,13 @@ func addFeedSource(newURL string, category string, db *sqlx.DB) bool {
 	return false
 }
 
-func getFeedsForSource(feedSource FeedSource) {
-	feedparser := gofeed.NewParser()
-	feed, err := feedparser.ParseURL(feedSource.Feedurl)
-	if err != nil {
-		println("Error: %s", err)
-	}
-	//feedItems := []FeedItem{}
-	for i := 0; i < len(feed.Items); i++ {
-		println("Adding Feed Item: " + feed.Items[i].Title)
-	}
-}
+// func getFeedsForSource(feedSource FeedSource) {
+// 	feed, err = getGoFeed(feedSource)
+// 	//feedItems := []FeedItem{}
+// 	for i := 0; i < len(feed.Items); i++ {
+// 		println("Adding Feed Item: " + feed.Items[i].Title)
+// 	}
+// }
 
 // Create a feed object from a url string
 func createFeed(url string) (*gofeed.Feed, error) {
