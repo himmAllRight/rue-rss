@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mmcdole/gofeed"
@@ -43,13 +40,10 @@ type FeedItem struct {
 	Postcontent     string
 }
 
-// Init DB
+// Init DB// Updates all the feed sources in feedStore table
 func initDB() *sqlx.DB {
 	db, err := sqlx.Connect("sqlite3", "test-db2.db")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
+	checkErr(err)
 	db.MustExec(schema)
 
 	return db
@@ -80,9 +74,7 @@ func deleteFeedSource(feedurl string, db *sqlx.DB) {
 func createFeed(url string) (*gofeed.Feed, error) {
 	feedparser := gofeed.NewParser()
 	feed, err := feedparser.ParseURL(url)
-	if err != nil {
-		return nil, fmt.Errorf("Feed not found with parser")
-	}
+	checkErr(err)
 	return feed, nil
 }
 
@@ -116,6 +108,21 @@ func storeAllFeedItems(feedSource FeedSource, db *sqlx.DB) {
 			debugPrint("Feed Item Not Added: " + feed.Items[i].Title)
 		}
 	}
+}
+
+// Returns a feedItem object, if it exists in the DB (feedData Table)
+func getFeedItemData(posturl string, db *sqlx.DB) FeedItem {
+	dbFeedItem := []FeedItem{}
+	db.Select(&dbFeedItem, "SELECT posturl FROM feedData where posturl=$1", posturl)
+
+	if len(dbFeedItem) > 0 {
+		debugPrint("Inside getFeedItemData if cond")
+		// Returns first item for now... should change to single item select
+		return dbFeedItem[0]
+	}
+
+	// TODO: Not sure what to return if no match...
+	return FeedItem{}
 }
 
 // Stores the feed item to the DB

@@ -20,6 +20,13 @@ type feedEntry struct {
 	Category string
 }
 
+// Takes a FeedItem object and returns it as a JSON []byte
+func feedItemJSON(feedItem FeedItem) []byte {
+	b, err := json.Marshal(feedItem)
+	checkErr(err)
+	return b
+}
+
 ///////////////////////////////////
 //// Handler Wrapper Functions ////
 ///////////////////////////////////
@@ -106,6 +113,27 @@ func updateAllFeedsHandler(d withDB) http.Handler {
 	})
 }
 
+// Updates all the feed sources in feedStore table
+func getFeedItemDataHandler(d withDB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		var t feedEntry
+		err := decoder.Decode(&t)
+		if err != nil {
+			panic(err)
+		}
+		defer r.Body.Close()
+		log.Println(t)
+
+		feedItem := getFeedItemData(t.FeedURL, d.db)
+		log.Println(feedItem.Postdescription)
+		log.Println(feedItem.Posturl)
+		log.Println(feedItemJSON(feedItem))
+
+		fmt.Fprintf(w, "Success! All feed sources have been updated.\n")
+	})
+}
+
 func noMatchHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Undefined request url, %q\n", html.EscapeString(r.URL.Path))
 }
@@ -123,6 +151,7 @@ func startServer(db *sqlx.DB) {
 	h.Handle("/add-feed", withLog(addFeedHandler(withDB(d))))
 	h.Handle("/delete-feed", withLog(deleteFeedHandler(withDB(d))))
 	h.Handle("/update-all-feeds", withLog(updateAllFeedsHandler(withDB(d))))
+	h.Handle("/get-feeditem-data", withLog(getFeedItemDataHandler(withDB(d))))
 
 	h.HandleFunc("/test", apiHandler) // Simple API test
 	h.HandleFunc("/", noMatchHandler) // No Match condition
