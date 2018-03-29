@@ -11,12 +11,6 @@ import (
 
 // DB Schema Def
 var schema = `
-CREATE TABLE IF NOT EXISTS person (
-	first_name text,
-	last_name text,
-	email text
-);
-
 CREATE TABLE IF NOT EXISTS feedStore (
 	feedurl TEXT, 
 	category TEXT
