@@ -74,6 +74,22 @@ func addFeedHandler(d withDB) http.Handler {
 	})
 }
 
+// Adds a new feed to the DB.
+func deleteFeedHandler(d withDB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		var t feedEntry
+		err := decoder.Decode(&t)
+		if err != nil {
+			panic(err)
+		}
+		defer r.Body.Close()
+		log.Println(t)
+		deleteFeedSource(t.FeedURL, d.db)
+		fmt.Fprintf(w, "Success! The feed has been removed\n")
+	})
+}
+
 // Updates all the feed sources in feedStore table
 func updateAllFeedsHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -105,6 +121,7 @@ func startServer(db *sqlx.DB) {
 
 	// Handler conditions
 	h.Handle("/add-feed", withLog(addFeedHandler(withDB(d))))
+	h.Handle("/delete-feed", withLog(deleteFeedHandler(withDB(d))))
 	h.Handle("/update-all-feeds", withLog(updateAllFeedsHandler(withDB(d))))
 
 	h.HandleFunc("/test", apiHandler) // Simple API test

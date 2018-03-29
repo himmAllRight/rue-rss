@@ -66,9 +66,6 @@ func addFeedSource(newURL string, category string, db *sqlx.DB) bool {
 	feeds := []FeedSource{}
 	db.Select(&feeds, "SELECT feedurl FROM feedStore where feedurl=$1", newURL)
 	if len(feeds) == 0 {
-		newFeed, err := createFeed(newURL)
-		checkErr(err)
-		fmt.Printf("Compare: %q and %q, %q\n", newURL, newFeed.FeedLink, newFeed.Link)
 		tx := db.MustBegin()
 		tx.MustExec("INSERT INTO feedStore (feedurl, category) VALUES ($1, $2)", newURL, category)
 		tx.Commit()
@@ -77,13 +74,13 @@ func addFeedSource(newURL string, category string, db *sqlx.DB) bool {
 	return false
 }
 
-// func getFeedsForSource(feedSource FeedSource) {
-// 	feed, err = getGoFeed(feedSource)
-// 	//feedItems := []FeedItem{}
-// 	for i := 0; i < len(feed.Items); i++ {
-// 		println("Adding Feed Item: " + feed.Items[i].Title)
-// 	}
-// }
+// Removes a source feed from the feedStore table, and it's associated data
+func deleteFeedSource(feedurl string, db *sqlx.DB) {
+	tx := db.MustBegin()
+	tx.MustExec("DELETE FROM feedStore WHERE feedurl=?;", feedurl)
+	tx.MustExec("DELETE FROM feedData WHERE feedurl=?;", feedurl)
+	tx.Commit()
+}
 
 // Create a feed object from a url string
 func createFeed(url string) (*gofeed.Feed, error) {
@@ -107,20 +104,18 @@ func updateAllFeedSources(db *sqlx.DB) {
 
 	for _, feedSourceObj := range feedStore {
 		debugPrint(feedSourceObj.Feedurl)
-		feedSource, err := createFeed(feedSourceObj.Feedurl)
-		if err != nil {
-			debugPrint("Error Creating Feed Item for " + feedSourceObj.Feedurl)
-			return
-		}
-		storeAllFeedItems(feedSource, db)
+		storeAllFeedItems(feedSourceObj, db)
 	}
 }
 
 // Stores all of the items for a feed source (if they don't exist)
-func storeAllFeedItems(feed *gofeed.Feed, db *sqlx.DB) {
+func storeAllFeedItems(feedSource FeedSource, db *sqlx.DB) {
+	feed, err := createFeed(feedSource.Feedurl)
+	checkErr(err)
+
 	// Iterate over feed items
 	for i := 0; i < len(feed.Items); i++ {
-		addedP := storeFeedItem(feed, feed.Items[i], db)
+		addedP := storeFeedItem(feedSource, feed, feed.Items[i], db)
 		if addedP {
 			debugPrint("Feed Item Added: " + feed.Items[i].Title)
 		} else {
@@ -130,12 +125,12 @@ func storeAllFeedItems(feed *gofeed.Feed, db *sqlx.DB) {
 }
 
 // Stores the feed item to the DB
-func storeFeedItem(feed *gofeed.Feed, feedItem *gofeed.Item, db *sqlx.DB) bool {
+func storeFeedItem(feedSource FeedSource, feed *gofeed.Feed, feedItem *gofeed.Item, db *sqlx.DB) bool {
 	dbFeedItem := []FeedItem{}
 	db.Select(&dbFeedItem, "SELECT posturl FROM feedData where posturl=$1", feedItem.Link)
 	if len(dbFeedItem) == 0 {
 		tx := db.MustBegin()
-		tx.MustExec("INSERT INTO feedData (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)", feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
+		tx.MustExec("INSERT INTO feedData (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)", feed.Title, feedSource.Feedurl, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
 		tx.Commit()
 		return true
 	}
