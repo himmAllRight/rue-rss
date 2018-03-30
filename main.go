@@ -22,9 +22,16 @@ func debugPrint(str string) {
 }
 
 // Check error returns
-func checkErr(err error) {
+func checkErrFatal(err error) {
 	if err != nil {
 		log.Fatal("ERROR:", err)
+	}
+}
+
+// Check error returns, just log if error
+func checkErrJustLog(err error) {
+	if err != nil {
+		log.Printf("ERROR: %s\n", err)
 	}
 }
 

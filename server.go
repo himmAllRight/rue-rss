@@ -23,7 +23,7 @@ type feedEntry struct {
 // Takes a FeedItem object and returns it as a JSON []byte
 func feedItemJSON(feedItem FeedItem) []byte {
 	b, err := json.Marshal(feedItem)
-	checkErr(err)
+	checkErrJustLog(err)
 	return b
 }
 

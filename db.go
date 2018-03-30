@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -46,7 +47,7 @@ type FeedItem struct {
 // Init DB// Updates all the feed sources in feedStore table
 func initDB() *sqlx.DB {
 	db, err := sqlx.Connect("sqlite3", "test-db2.db")
-	checkErr(err)
+	checkErrFatal(err)
 	db.MustExec(schema)
 
 	return db
@@ -77,7 +78,10 @@ func deleteFeedSource(feedurl string, db *sqlx.DB) {
 func createFeed(url string) (*gofeed.Feed, error) {
 	feedparser := gofeed.NewParser()
 	feed, err := feedparser.ParseURL(url)
-	checkErr(err)
+	if err != nil {
+		log.Printf("Feed not found for: %s\n", url)
+		return feed, errors.New("Feed not found")
+	}
 	return feed, nil
 }
 
@@ -100,7 +104,9 @@ func updateAllFeedSources(db *sqlx.DB) {
 // Stores all of the items for a feed source (if they don't exist)
 func storeAllFeedItems(feedSource FeedSource, db *sqlx.DB) {
 	feed, err := createFeed(feedSource.Feedurl)
-	checkErr(err)
+	if err != nil {
+		return
+	}
 
 	// Iterate over feed items
 	for i := 0; i < len(feed.Items); i++ {
