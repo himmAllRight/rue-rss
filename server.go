@@ -126,9 +126,7 @@ func getFeedItemDataHandler(d withDB) http.Handler {
 		log.Println(t)
 
 		feedItem := getFeedItemData(t.FeedURL, d.db)
-		// So this weill be encoded... not sure how we want to do this...Maybe xml
-		log.Println(feedItemJSON(feedItem))
-
+		json.NewEncoder(w).Encode(feedItem)
 		fmt.Fprintf(w, "Success! All feed sources have been updated.\n")
 	})
 }

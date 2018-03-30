@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mmcdole/gofeed"
@@ -113,14 +115,13 @@ func storeAllFeedItems(feedSource FeedSource, db *sqlx.DB) {
 // Returns a feedItem object, if it exists in the DB (feedData Table)
 func getFeedItemData(posturl string, db *sqlx.DB) FeedItem {
 	dbFeedItem := []FeedItem{}
-	db.Select(&dbFeedItem, "SELECT posturl FROM feedData where posturl=$1", posturl)
+	db.Select(&dbFeedItem, "SELECT * FROM feedData where posturl=$1", posturl)
 
+	fmt.Printf("posturl: %s\n", posturl)
 	if len(dbFeedItem) > 0 {
-		debugPrint("Inside getFeedItemData if cond")
 		// Returns first item for now... should change to single item select
 		return dbFeedItem[0]
 	}
-
 	// TODO: Not sure what to return if no match...
 	return FeedItem{}
 }
