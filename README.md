@@ -7,19 +7,20 @@ A simple RSS Client Server application. The Rue server component will runs in th
 
 Server: The main server component is written in go. Currently in Development.
 
-TODO:
-    [X] - Write DB component
-    [X] - Feed Scraper Component
-    [x] - Basic API Setup
-    [ ] - Implement API Calls for client applications
-        [X] - Add Feed Source
-        [X] - Delete Feed Source
-        [ ] - Edit Feed Source [Category]
-        [X] - Update All Feed Sources
-        [X] - Get Feed Item Data
-        [ ] - Mark Feed Item Read
-        [ ] - Mark Feed Item Unread
+#### TODO
+
+- [X] Write DB component
+- [X] Feed Scraper Component
+    - [x] Basic API Setup
+    - [ ] Implement API Calls for client applications
+        - [X] Add Feed Source
+        - [X] Delete Feed Source
+        - [ ] Edit Feed Source [Category]
+        - [X] Update All Feed Sources
+        - [X] Get Feed Item Data
+        - [ ] Mark Feed Item Read
+        - [ ] Mark Feed Item Unread
         ...
-    [ ] - Standardize all API returns
+    - [ ] Standardize all API returns
     
     ... And more I can't think of at the top of my head
