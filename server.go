@@ -125,9 +125,9 @@ func getFeedItemDataHandler(d withDB) http.Handler {
 		defer r.Body.Close()
 		log.Println(t)
 
-		feedItem := getFeedItemData(t.FeedURL, d.db)
+		feedItem, err := getFeedItemData(t.FeedURL, d.db)
+		// TODO: How do we want to handle a no match? Should we just return an empty reponse?
 		json.NewEncoder(w).Encode(feedItem)
-		fmt.Fprintf(w, "Success! All feed sources have been updated.\n")
 	})
 }
 

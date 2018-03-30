@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -113,17 +114,17 @@ func storeAllFeedItems(feedSource FeedSource, db *sqlx.DB) {
 }
 
 // Returns a feedItem object, if it exists in the DB (feedData Table)
-func getFeedItemData(posturl string, db *sqlx.DB) FeedItem {
-	dbFeedItem := []FeedItem{}
-	db.Select(&dbFeedItem, "SELECT * FROM feedData where posturl=$1", posturl)
+func getFeedItemData(posturl string, db *sqlx.DB) (FeedItem, error) {
+	dbFeedItem := FeedItem{}
+	db.Get(&dbFeedItem, "SELECT * FROM feedData where posturl=$1", posturl)
 
 	fmt.Printf("posturl: %s\n", posturl)
-	if len(dbFeedItem) > 0 {
-		// Returns first item for now... should change to single item select
-		return dbFeedItem[0]
+	fmt.Printf("return struct:\n%+v\n", dbFeedItem)
+
+	if dbFeedItem.Posturl != "" {
+		return dbFeedItem, nil
 	}
-	// TODO: Not sure what to return if no match...
-	return FeedItem{}
+	return dbFeedItem, errors.New("No match ")
 }
 
 // Stores the feed item to the DB
