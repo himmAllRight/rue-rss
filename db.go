@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS feedData (
 	posturl TEXT,
 	publishdate TEXT,
 	postdescription TEXT,
-	postcontent TEXT
+	postcontent TEXT,
+	postread BIT
 )`
 
 // FeedSource struct that contains a feed source info
@@ -42,6 +43,7 @@ type FeedItem struct {
 	Publishdate     string
 	Postdescription string
 	Postcontent     string
+	postread        int
 }
 
 // Init DB// Updates all the feed sources in feedStore table
@@ -139,7 +141,7 @@ func storeFeedItem(feedSource FeedSource, feed *gofeed.Feed, feedItem *gofeed.It
 	db.Select(&dbFeedItem, "SELECT posturl FROM feedData where posturl=$1", feedItem.Link)
 	if len(dbFeedItem) == 0 {
 		tx := db.MustBegin()
-		tx.MustExec("INSERT INTO feedData (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent) VALUES (?, ?, ?, ?, ?, ?, ?)", feed.Title, feedSource.Feedurl, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content)
+		tx.MustExec("INSERT INTO feedData (feedname, feedurl, postname, posturl, publishdate, postdescription, postcontent, postread) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", feed.Title, feedSource.Feedurl, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content, 0)
 		tx.Commit()
 		return true
 	}
