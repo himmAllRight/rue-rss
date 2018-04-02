@@ -131,6 +131,23 @@ func getFeedItemDataHandler(d withDB) http.Handler {
 	})
 }
 
+// Marks the feed item as read
+func markFeedItemReadHandler(readValue int, d withDB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		var t feedEntry
+		err := decoder.Decode(&t)
+		if err != nil {
+			panic(err)
+		}
+		defer r.Body.Close()
+		log.Println(t)
+
+		markReadValue(t.FeedURL, readValue, d.db)
+		//json.NewEncoder(w).Encode(feedItem)
+	})
+}
+
 func noMatchHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Undefined request url, %q\n", html.EscapeString(r.URL.Path))
 }
@@ -149,6 +166,8 @@ func startServer(db *sqlx.DB) {
 	h.Handle("/delete-feed", withLog(deleteFeedHandler(withDB(d))))
 	h.Handle("/update-all-feeds", withLog(updateAllFeedsHandler(withDB(d))))
 	h.Handle("/get-feeditem-data", withLog(getFeedItemDataHandler(withDB(d))))
+	h.Handle("/mark-read", withLog(markFeedItemReadHandler(1, withDB(d))))
+	h.Handle("/mark-unread", withLog(markFeedItemReadHandler(0, withDB(d))))
 
 	h.HandleFunc("/test", apiHandler) // Simple API test
 	h.HandleFunc("/", noMatchHandler) // No Match condition

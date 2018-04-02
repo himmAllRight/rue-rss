@@ -148,6 +148,14 @@ func storeFeedItem(feedSource FeedSource, feed *gofeed.Feed, feedItem *gofeed.It
 	return false
 }
 
+// Marks a feed Items as read (1) or unread(0)
+func markReadValue(feedItemURL string, readValue int, db *sqlx.DB) int {
+	tx := db.MustBegin()
+	tx.MustExec("UPDATE feedData set postread=? WHERE posturl=?", readValue, feedItemURL)
+	tx.Commit()
+	return readValue
+}
+
 func sqlxTestMain() {
 	db := initDB()
 
