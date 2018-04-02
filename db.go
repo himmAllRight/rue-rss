@@ -122,7 +122,7 @@ func storeAllFeedItems(feedSource FeedSource, db *sqlx.DB) {
 // Returns a feedItem object, if it exists in the DB (feedData Table)
 func getFeedItemData(posturl string, db *sqlx.DB) (FeedItem, error) {
 	dbFeedItem := FeedItem{}
-	db.Get(&dbFeedItem, "SELECT * FROM feedData where posturl=$1", posturl)
+	db.Get(&dbFeedItem, "SELECT * FROM feedData WHERE posturl=$1", posturl)
 
 	fmt.Printf("posturl: %s\n", posturl)
 	fmt.Printf("return struct:\n%+v\n", dbFeedItem)
