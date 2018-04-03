@@ -43,7 +43,7 @@ type FeedItem struct {
 	Publishdate     string
 	Postdescription string
 	Postcontent     string
-	postread        int
+	Postread        int
 }
 
 // Init DB// Updates all the feed sources in feedStore table
