@@ -18,9 +18,17 @@ Server: The main server component is written in go. Currently in Development.
         - [ ] Edit Feed Source [Category]
         - [X] Update All Feed Sources
         - [X] Get Feed Item Data
-        - [ ] Mark Feed Item Read
-        - [ ] Mark Feed Item Unread
+        - [X] Mark Feed Item Read
+        - [X] Mark Feed Item Unread
         ...
     - [ ] Standardize all API returns
-    
     ... And more I can't think of at the top of my head
+
+- [ ] Setup Preferences System?
+    ...
+- [ ] Project Build
+    - [ ] Properly organize application 
+    - [ ] Determine build steps
+    - [ ] Write build instructions
+- [ ] Authentication System
+    ...
