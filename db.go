@@ -151,13 +151,19 @@ func storeFeedItem(feedSource FeedSource, feed *gofeed.Feed, feedItem *gofeed.It
 
 // Marks a feed Items as read (1) or unread(0)
 func markReadValue(feedItemURL string, readValue int, db *sqlx.DB) int {
-	executeSQLStatement("UPDATE feedData set postread="+strconv.Itoa(readValue)+" WHERE posturl=\""+feedItemURL+"\"", db)
+	executeSQLStatement(db, "UPDATE feedData set postread="+strconv.Itoa(readValue)+" WHERE posturl=\""+feedItemURL+"\"")
 	return readValue
+}
+
+// Edits the category of a feedSource
+func editFeedSourceCat(feedSourceURL string, newCategory string, db *sqlx.DB) {
+	executeSQLStatement(db, "UPDATE feedStore set category=\""+newCategory+"\" WHERE feedurl=\""+feedSourceURL+"\"")
 }
 
 // Funciton to easily execute SQL statements to DB (without obtaining information)
 // NOTE: IF we have to do any write concurrency stuff, this is a spot for it
-func executeSQLStatement(sqlStatement string, db *sqlx.DB) {
+func executeSQLStatement(db *sqlx.DB, sqlStatement string) {
+	debugPrint(sqlStatement)
 	tx := db.MustBegin()
 	tx.MustExec(sqlStatement)
 	tx.Commit()

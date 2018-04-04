@@ -81,6 +81,22 @@ func addFeedHandler(d withDB) http.Handler {
 	})
 }
 
+// Edits feed source category
+func editFeedCategory(d withDB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		var t feedEntry
+		err := decoder.Decode(&t)
+		if err != nil {
+			panic(err)
+		}
+		defer r.Body.Close()
+		log.Println(t)
+		editFeedSourceCat(t.FeedURL, t.Category, d.db)
+		fmt.Fprintf(w, "Success! The feed has been added\n")
+	})
+}
+
 // Adds a new feed to the DB.
 func deleteFeedHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +147,7 @@ func getFeedItemDataHandler(d withDB) http.Handler {
 	})
 }
 
-// Marks the feed item as read
+// Marks the feed item as read or unread
 func markFeedItemReadHandler(readValue int, d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
@@ -164,6 +180,7 @@ func startServer(db *sqlx.DB) {
 	// Handler conditions
 	h.Handle("/add-feed", withLog(addFeedHandler(withDB(d))))
 	h.Handle("/delete-feed", withLog(deleteFeedHandler(withDB(d))))
+	h.Handle("/edit-category", withLog(editFeedCategory(withDB(d))))
 	h.Handle("/update-all-feeds", withLog(updateAllFeedsHandler(withDB(d))))
 	h.Handle("/get-feeditem-data", withLog(getFeedItemDataHandler(withDB(d))))
 	h.Handle("/mark-read", withLog(markFeedItemReadHandler(1, withDB(d))))
