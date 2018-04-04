@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -150,10 +151,16 @@ func storeFeedItem(feedSource FeedSource, feed *gofeed.Feed, feedItem *gofeed.It
 
 // Marks a feed Items as read (1) or unread(0)
 func markReadValue(feedItemURL string, readValue int, db *sqlx.DB) int {
-	tx := db.MustBegin()
-	tx.MustExec("UPDATE feedData set postread=? WHERE posturl=?", readValue, feedItemURL)
-	tx.Commit()
+	executeSQLStatement("UPDATE feedData set postread="+strconv.Itoa(readValue)+" WHERE posturl=\""+feedItemURL+"\"", db)
 	return readValue
+}
+
+// Funciton to easily execute SQL statements to DB (without obtaining information)
+// NOTE: IF we have to do any write concurrency stuff, this is a spot for it
+func executeSQLStatement(sqlStatement string, db *sqlx.DB) {
+	tx := db.MustBegin()
+	tx.MustExec(sqlStatement)
+	tx.Commit()
 }
 
 func sqlxTestMain() {
