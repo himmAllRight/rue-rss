@@ -97,6 +97,24 @@ func editFeedCategory(d withDB) http.Handler {
 	})
 }
 
+// Gets the FeedSource items from the feedStore
+func getFeedStoreDataHandler(d withDB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		var t feedEntry
+		err := decoder.Decode(&t)
+		if err != nil {
+			panic(err)
+		}
+		defer r.Body.Close()
+		log.Println(t)
+
+		feedStore, err := getFeedStoreData(d.db)
+		// TODO: How do we want to handle a no match? Should we just return an empty reponse?
+		json.NewEncoder(w).Encode(feedStore)
+	})
+}
+
 // Adds a new feed to the DB.
 func deleteFeedHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -181,6 +199,7 @@ func startServer(db *sqlx.DB) {
 	h.Handle("/add-feed", withLog(addFeedHandler(withDB(d))))
 	h.Handle("/delete-feed", withLog(deleteFeedHandler(withDB(d))))
 	h.Handle("/edit-category", withLog(editFeedCategory(withDB(d))))
+	h.Handle("/get-feedstore", withLog(getFeedStoreDataHandler(withDB(d))))
 	h.Handle("/update-all-feeds", withLog(updateAllFeedsHandler(withDB(d))))
 	h.Handle("/get-feeditem-data", withLog(getFeedItemDataHandler(withDB(d))))
 	h.Handle("/mark-read", withLog(markFeedItemReadHandler(1, withDB(d))))

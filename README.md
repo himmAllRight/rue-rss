@@ -15,7 +15,8 @@ Server: The main server component is written in go. Currently in Development.
     - [ ] Implement API Calls for client applications
         - [X] Add Feed Source
         - [X] Delete Feed Source
-        - [ ] Edit Feed Source [Category]
+        - [X] Get feedStore
+        - [X] Edit Feed Source [Category]
         - [X] Update All Feed Sources
         - [X] Get Feed Item Data
         - [X] Mark Feed Item Read

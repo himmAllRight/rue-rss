@@ -88,6 +88,19 @@ func createFeed(url string) (*gofeed.Feed, error) {
 	return feed, nil
 }
 
+// Returns a slice of FeedItems from the feedStire
+func getFeedStoreData(db *sqlx.DB) ([]FeedSource, error) {
+	feedStore := []FeedSource{}
+	db.Select(&feedStore, "SELECT * FROM feedStore")
+
+	fmt.Printf("return struct:\n%+v\n", feedStore)
+
+	if feedStore != nil {
+		return feedStore, nil
+	}
+	return feedStore, errors.New("No match ")
+}
+
 // Copies contents of Feed Item into the Feed Item struct
 // func createFeedItemStruct(feed *gofeed.Feed, feedItem *gofeed.Item) FeedItem {
 // 	return FeedItem{feed.Title, feed.Link, feedItem.Title, feedItem.Link, feedItem.Published, feedItem.Description, feedItem.Content}
