@@ -33,3 +33,7 @@ Server: The main server component is written in go. Currently in Development.
     - [ ] Write build instructions
 - [ ] Authentication System
     ...
+
+
+
+curl -X POST -d "{\"URL\":\"https://www.wuxiaworld.com/feed/chapters\"}" http://localhost:8080/get-all-feeditem-data
