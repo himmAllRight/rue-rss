@@ -149,6 +149,20 @@ func getFeedItemData(posturl string, db *sqlx.DB) (FeedItem, error) {
 	return dbFeedItem, errors.New("No match ")
 }
 
+func getAllFeedItemData(feedURL string, db *sqlx.DB) ([]FeedItem, error) {
+	dbFeedItems := []FeedItem{}
+	db.Select(&dbFeedItems, "SELECT * FROM feedData WHERE feedurl=$1", feedURL)
+
+	fmt.Printf("url: %s\n", feedURL)
+	fmt.Printf("return struct:\n%+v\n", dbFeedItems)
+
+	if len(dbFeedItems) == 0 {
+		return nil, errors.New("No matches found")
+	}
+
+	return dbFeedItems, nil
+}
+
 // Stores the feed item to the DB
 func storeFeedItem(feedSource FeedSource, feed *gofeed.Feed, feedItem *gofeed.Item, db *sqlx.DB) bool {
 	dbFeedItem := []FeedItem{}

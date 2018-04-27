@@ -131,7 +131,16 @@ func markFeedItemReadHandler(readValue int, d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userArgs := readApiRequest(r)
 		markReadValue(userArgs.URL, readValue, d.db)
-		//json.NewEncoder(w).Encode(feedItem)
+		//	json.NewEncoder(w).Encode(feedItem)
+	})
+}
+
+func getAllFeedData(d withDB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		userArgs := readApiRequest(r)
+		allFeedData, _ := getAllFeedItemData(userArgs.URL, d.db)
+		json.NewEncoder(w).Encode(allFeedData)
 	})
 }
 
@@ -155,6 +164,7 @@ func startServer(db *sqlx.DB) {
 	h.Handle("/get-feedstore", withLog(getFeedStoreDataHandler(withDB(d))))
 	h.Handle("/update-all-feeds", withLog(updateAllFeedsHandler(withDB(d))))
 	h.Handle("/get-feeditem-data", withLog(getFeedItemDataHandler(withDB(d))))
+	h.Handle("/get-all-feeditem-data", withLog(getAllFeedData(withDB(d))))
 	h.Handle("/mark-read", withLog(markFeedItemReadHandler(1, withDB(d))))
 	h.Handle("/mark-unread", withLog(markFeedItemReadHandler(0, withDB(d))))
 
