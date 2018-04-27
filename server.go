@@ -15,7 +15,7 @@ type testStruct struct {
 	Test string
 }
 
-type request_values struct {
+type requestValues struct {
 	URL      string
 	Category string
 }
@@ -69,30 +69,42 @@ func apiHandler(rq http.ResponseWriter, req *http.Request) {
 func addFeedHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
-		var t feedEntry
+		var t requestValues
 		err := decoder.Decode(&t)
 		if err != nil {
 			panic(err)
 		}
 		defer r.Body.Close()
 		log.Println(t)
-		addFeedSource(t.FeedURL, t.Category, d.db)
+		addFeedSource(t.URL, t.Category, d.db)
 		fmt.Fprintf(w, "Success! The feed has been added\n")
 	})
+}
+
+func readApiRequest(r *http.Request) requestValues {
+	decoder := json.NewDecoder(r.Body)
+	var userRequest requestValues
+	err := decoder.Decode(&userRequest)
+	if err != nil {
+		panic(err)
+	}
+	defer r.Body.Close()
+	log.Println(userRequest)
+	return userRequest
 }
 
 // Edits feed source category
 func editFeedCategory(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
-		var t feedEntry
+		var t requestValues
 		err := decoder.Decode(&t)
 		if err != nil {
 			panic(err)
 		}
 		defer r.Body.Close()
 		log.Println(t)
-		editFeedSourceCat(t.FeedURL, t.Category, d.db)
+		editFeedSourceCat(t.URL, t.Category, d.db)
 		fmt.Fprintf(w, "Success! The feed has been added\n")
 	})
 }
@@ -101,7 +113,7 @@ func editFeedCategory(d withDB) http.Handler {
 func getFeedStoreDataHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
-		var t feedEntry
+		var t requestValues
 		err := decoder.Decode(&t)
 		if err != nil {
 			panic(err)
@@ -119,14 +131,14 @@ func getFeedStoreDataHandler(d withDB) http.Handler {
 func deleteFeedHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
-		var t feedEntry
+		var t requestValues
 		err := decoder.Decode(&t)
 		if err != nil {
 			panic(err)
 		}
 		defer r.Body.Close()
 		log.Println(t)
-		deleteFeedSource(t.FeedURL, d.db)
+		deleteFeedSource(t.URL, d.db)
 		fmt.Fprintf(w, "Success! The feed has been removed\n")
 	})
 }
@@ -135,7 +147,7 @@ func deleteFeedHandler(d withDB) http.Handler {
 func updateAllFeedsHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
-		var t feedEntry
+		var t requestValues
 		err := decoder.Decode(&t)
 		if err != nil {
 			panic(err)
@@ -151,7 +163,7 @@ func updateAllFeedsHandler(d withDB) http.Handler {
 func getFeedItemDataHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
-		var t feedEntry
+		var t requestValues
 		err := decoder.Decode(&t)
 		if err != nil {
 			panic(err)
@@ -159,7 +171,7 @@ func getFeedItemDataHandler(d withDB) http.Handler {
 		defer r.Body.Close()
 		log.Println(t)
 
-		feedItem, err := getFeedItemData(t.FeedURL, d.db)
+		feedItem, err := getFeedItemData(t.URL, d.db)
 		// TODO: How do we want to handle a no match? Should we just return an empty reponse?
 		json.NewEncoder(w).Encode(feedItem)
 	})
@@ -169,7 +181,7 @@ func getFeedItemDataHandler(d withDB) http.Handler {
 func markFeedItemReadHandler(readValue int, d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
-		var t feedEntry
+		var t requestValues
 		err := decoder.Decode(&t)
 		if err != nil {
 			panic(err)
@@ -177,7 +189,7 @@ func markFeedItemReadHandler(readValue int, d withDB) http.Handler {
 		defer r.Body.Close()
 		log.Println(t)
 
-		markReadValue(t.FeedURL, readValue, d.db)
+		markReadValue(t.URL, readValue, d.db)
 		//json.NewEncoder(w).Encode(feedItem)
 	})
 }
