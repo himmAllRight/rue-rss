@@ -15,8 +15,8 @@ type testStruct struct {
 	Test string
 }
 
-type feedEntry struct {
-	FeedURL  string
+type request_values struct {
+	URL      string
 	Category string
 }
 
