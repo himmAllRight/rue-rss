@@ -3,11 +3,27 @@
 # Rue RSS
 A simple RSS Client Server application. The Rue server component will runs in the background on the user's computer, or on a remote server locations. Client applications can connect to the server using a simple API. This creates a simple solution for maintaining rss feeds in a central location, and viewing them in all sorts of reader clients (web, mobile, command line).
 
-### Dev Notes
+## Dev Notes
 
 Server: The main server component is written in go. Currently in Development.
 
-#### Server TODO
+### API Requests to Server
+
+
+#### Get Feedstore
+
+```bash
+curl -X POST http://localhost:8080/get-all-feeditem-data
+```
+
+#### Get All Feed Item Data
+
+```bash
+curl -X POST -d "{\"URL\":\"http://ryan.himmelwright.net/post/index.xml\"}" http://localhost:8080/get-all-feeditem-data
+```
+
+
+### Server TODO
 
 - [X] Write DB component
 - [X] Feed Scraper Component
@@ -19,21 +35,19 @@ Server: The main server component is written in go. Currently in Development.
         - [X] Edit Feed Source [Category]
         - [X] Update All Feed Sources
         - [X] Get Feed Item Data
+		- [X] Get All Feed Item Data from a Feed Source
         - [X] Mark Feed Item Read
         - [X] Mark Feed Item Unread
         ...
-    - [ ] Standardize all API returns
+    - [X] Standardize all API returns
     ... And more I can't think of at the top of my head
 
 - [ ] Setup Preferences System?
+    ...
+- [ ] Authentication System
     ...
 - [ ] Project Build
     - [ ] Properly organize application 
     - [ ] Determine build steps
     - [ ] Write build instructions
-- [ ] Authentication System
-    ...
 
-
-
-curl -X POST -d "{\"URL\":\"https://www.wuxiaworld.com/feed/chapters\"}" http://localhost:8080/get-all-feeditem-data
