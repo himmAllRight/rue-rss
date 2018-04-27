@@ -53,18 +53,6 @@ func withLog(h http.Handler) http.Handler {
 //// Handler Functions ////
 ///////////////////////////
 
-// Generalized handler functions
-func apiHandler(rq http.ResponseWriter, req *http.Request) {
-	decoder := json.NewDecoder(req.Body)
-	var t testStruct
-	err := decoder.Decode(&t)
-	if err != nil {
-		panic(err)
-	}
-	defer req.Body.Close()
-	log.Println(t.Test)
-}
-
 // Adds a new feed to the DB.
 func addFeedHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -96,15 +84,8 @@ func readApiRequest(r *http.Request) requestValues {
 // Edits feed source category
 func editFeedCategory(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		var t requestValues
-		err := decoder.Decode(&t)
-		if err != nil {
-			panic(err)
-		}
-		defer r.Body.Close()
-		log.Println(t)
-		editFeedSourceCat(t.URL, t.Category, d.db)
+		userArgs := readApiRequest(r)
+		editFeedSourceCat(userArgs.URL, userArgs.Category, d.db)
 		fmt.Fprintf(w, "Success! The feed has been added\n")
 	})
 }
@@ -112,16 +93,7 @@ func editFeedCategory(d withDB) http.Handler {
 // Gets the FeedSource items from the feedStore
 func getFeedStoreDataHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		var t requestValues
-		err := decoder.Decode(&t)
-		if err != nil {
-			panic(err)
-		}
-		defer r.Body.Close()
-		log.Println(t)
-
-		feedStore, err := getFeedStoreData(d.db)
+		feedStore, _ := getFeedStoreData(d.db)
 		// TODO: How do we want to handle a no match? Should we just return an empty reponse?
 		json.NewEncoder(w).Encode(feedStore)
 	})
@@ -130,15 +102,8 @@ func getFeedStoreDataHandler(d withDB) http.Handler {
 // Adds a new feed to the DB.
 func deleteFeedHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		var t requestValues
-		err := decoder.Decode(&t)
-		if err != nil {
-			panic(err)
-		}
-		defer r.Body.Close()
-		log.Println(t)
-		deleteFeedSource(t.URL, d.db)
+		userArgs := readApiRequest(r)
+		deleteFeedSource(userArgs.URL, d.db)
 		fmt.Fprintf(w, "Success! The feed has been removed\n")
 	})
 }
@@ -146,14 +111,6 @@ func deleteFeedHandler(d withDB) http.Handler {
 // Updates all the feed sources in feedStore table
 func updateAllFeedsHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		var t requestValues
-		err := decoder.Decode(&t)
-		if err != nil {
-			panic(err)
-		}
-		defer r.Body.Close()
-		log.Println(t)
 		updateAllFeedSources(d.db)
 		fmt.Fprintf(w, "Success! All feed sources have been updated.\n")
 	})
@@ -162,16 +119,8 @@ func updateAllFeedsHandler(d withDB) http.Handler {
 // Updates all the feed sources in feedStore table
 func getFeedItemDataHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		var t requestValues
-		err := decoder.Decode(&t)
-		if err != nil {
-			panic(err)
-		}
-		defer r.Body.Close()
-		log.Println(t)
-
-		feedItem, err := getFeedItemData(t.URL, d.db)
+		userArgs := readApiRequest(r)
+		feedItem, _ := getFeedItemData(userArgs.URL, d.db)
 		// TODO: How do we want to handle a no match? Should we just return an empty reponse?
 		json.NewEncoder(w).Encode(feedItem)
 	})
@@ -180,16 +129,8 @@ func getFeedItemDataHandler(d withDB) http.Handler {
 // Marks the feed item as read or unread
 func markFeedItemReadHandler(readValue int, d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		var t requestValues
-		err := decoder.Decode(&t)
-		if err != nil {
-			panic(err)
-		}
-		defer r.Body.Close()
-		log.Println(t)
-
-		markReadValue(t.URL, readValue, d.db)
+		userArgs := readApiRequest(r)
+		markReadValue(userArgs.URL, readValue, d.db)
 		//json.NewEncoder(w).Encode(feedItem)
 	})
 }
@@ -217,7 +158,6 @@ func startServer(db *sqlx.DB) {
 	h.Handle("/mark-read", withLog(markFeedItemReadHandler(1, withDB(d))))
 	h.Handle("/mark-unread", withLog(markFeedItemReadHandler(0, withDB(d))))
 
-	h.HandleFunc("/test", apiHandler) // Simple API test
 	h.HandleFunc("/", noMatchHandler) // No Match condition
 
 	err := http.ListenAndServe(":8080", h)
