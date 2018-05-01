@@ -15,6 +15,10 @@ type testStruct struct {
 	Test string
 }
 
+type simpleReturn struct {
+	Success string
+}
+
 type requestValues struct {
 	URL      string
 	Category string
@@ -49,6 +53,19 @@ func withLog(h http.Handler) http.Handler {
 	})
 }
 
+func readApiRequest(r *http.Request) requestValues {
+	decoder := json.NewDecoder(r.Body)
+	var userRequest requestValues
+	err := decoder.Decode(&userRequest)
+	if err != nil {
+		panic(err)
+	}
+	defer r.Body.Close()
+	log.Println(userRequest)
+	return userRequest
+}
+
+
 ////////////////////////////
 //// Handler Functions ////
 ///////////////////////////
@@ -65,20 +82,11 @@ func addFeedHandler(d withDB) http.Handler {
 		defer r.Body.Close()
 		log.Println(t)
 		addFeedSource(t.URL, t.Category, d.db)
-		fmt.Fprintf(w, "Success! The feed has been added\n")
+		returnStruct := simpleReturn{Success:"True"}
+		fmt.Printf("Return Struct: %s\n", returnStruct)
+		json.NewEncoder(w).Encode(returnStruct)
+		
 	})
-}
-
-func readApiRequest(r *http.Request) requestValues {
-	decoder := json.NewDecoder(r.Body)
-	var userRequest requestValues
-	err := decoder.Decode(&userRequest)
-	if err != nil {
-		panic(err)
-	}
-	defer r.Body.Close()
-	log.Println(userRequest)
-	return userRequest
 }
 
 // Edits feed source category
