@@ -22,6 +22,12 @@ curl -X POST http://localhost:8080/get-all-feeditem-data
 curl -X POST -d "{\"URL\":\"http://ryan.himmelwright.net/post/index.xml\"}" http://localhost:8080/get-all-feeditem-data
 ```
 
+#### Get All Feed Item Data
+
+```bash
+curl -X POST -d "{\"URL\":\"http://ryan.himmelwright.net/post/index.xml\", \"Category\": \"Deveopment\"}" http://localhost:8080/add-feed
+```
+
 
 ### Server TODO
 
