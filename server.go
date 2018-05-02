@@ -17,6 +17,7 @@ type testStruct struct {
 
 type simpleReturn struct {
 	Success string
+	Message string
 }
 
 type requestValues struct {
@@ -32,7 +33,7 @@ func feedItemJSON(feedItem FeedItem) []byte {
 }
 
 ///////////////////////////////////
-//// Handler Wrapper Functions ////
+//// Handler Helper Functions /////
 ///////////////////////////////////
 
 // Struct and method to pass db into handlers
@@ -65,7 +66,6 @@ func readApiRequest(r *http.Request) requestValues {
 	return userRequest
 }
 
-
 ////////////////////////////
 //// Handler Functions ////
 ///////////////////////////
@@ -73,19 +73,12 @@ func readApiRequest(r *http.Request) requestValues {
 // Adds a new feed to the DB.
 func addFeedHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		var t requestValues
-		err := decoder.Decode(&t)
-		if err != nil {
-			panic(err)
-		}
-		defer r.Body.Close()
-		log.Println(t)
-		addFeedSource(t.URL, t.Category, d.db)
-		returnStruct := simpleReturn{Success:"True"}
-		fmt.Printf("Return Struct: %s\n", returnStruct)
-		json.NewEncoder(w).Encode(returnStruct)
-		
+		userArgs := readApiRequest(r)
+		// TODO: Add Return cases to specifiy Success/Failure
+		addFeedSource(userArgs.URL, userArgs.Category, d.db)
+		simpleReturn := simpleReturn{Success: "True", Message: "The Feed has beed added."}
+		json.NewEncoder(w).Encode(simpleReturn)
+
 	})
 }
 
@@ -94,7 +87,9 @@ func editFeedCategory(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userArgs := readApiRequest(r)
 		editFeedSourceCat(userArgs.URL, userArgs.Category, d.db)
-		fmt.Fprintf(w, "Success! The feed has been added\n")
+		// TODO: Add Return cases to specifiy Success/Failure
+		simpleReturn := simpleReturn{Success: "True", Message: "Feed Category Edited."}
+		json.NewEncoder(w).Encode(simpleReturn)
 	})
 }
 
@@ -107,12 +102,14 @@ func getFeedStoreDataHandler(d withDB) http.Handler {
 	})
 }
 
-// Adds a new feed to the DB.
+// Deletes a feed from the DB.
 func deleteFeedHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userArgs := readApiRequest(r)
 		deleteFeedSource(userArgs.URL, d.db)
-		fmt.Fprintf(w, "Success! The feed has been removed\n")
+		// TODO: Add Return cases to specifiy Success/Failure
+		simpleReturn := simpleReturn{Success: "True", Message: "Feed Deleted."}
+		json.NewEncoder(w).Encode(simpleReturn)
 	})
 }
 
@@ -120,7 +117,9 @@ func deleteFeedHandler(d withDB) http.Handler {
 func updateAllFeedsHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		updateAllFeedSources(d.db)
-		fmt.Fprintf(w, "Success! All feed sources have been updated.\n")
+		// TODO: Add Return cases to specifiy Success/Failure
+		simpleReturn := simpleReturn{Success: "True", Message: "All Feeds Updated."}
+		json.NewEncoder(w).Encode(simpleReturn)
 	})
 }
 
@@ -139,13 +138,14 @@ func markFeedItemReadHandler(readValue int, d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userArgs := readApiRequest(r)
 		markReadValue(userArgs.URL, readValue, d.db)
-		//	json.NewEncoder(w).Encode(feedItem)
+		// TODO: Add Return cases to specifiy Success/Failure
+		simpleReturn := simpleReturn{Success: "True", Message: "Feed Item Read Value marked"}
+		json.NewEncoder(w).Encode(simpleReturn)
 	})
 }
 
 func getAllFeedData(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		userArgs := readApiRequest(r)
 		allFeedData, _ := getAllFeedItemData(userArgs.URL, d.db)
 		json.NewEncoder(w).Encode(allFeedData)
@@ -154,6 +154,9 @@ func getAllFeedData(d withDB) http.Handler {
 
 func noMatchHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Undefined request url, %q\n", html.EscapeString(r.URL.Path))
+	// TODO: Add Return cases to specifiy Success/Failure
+	simpleReturn := simpleReturn{Success: "True", Message: "Incorrect URI provided. No Match."}
+	json.NewEncoder(w).Encode(simpleReturn)
 }
 
 ////////////////////
