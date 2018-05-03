@@ -11,13 +11,10 @@ import (
 )
 
 // Request Structs
-type testStruct struct {
-	Test string
-}
-
 type simpleReturn struct {
 	Success string
 	Message string
+	Content string
 }
 
 type requestValues struct {
@@ -76,7 +73,7 @@ func addFeedHandler(d withDB) http.Handler {
 		userArgs := readApiRequest(r)
 		// TODO: Add Return cases to specifiy Success/Failure
 		addFeedSource(userArgs.URL, userArgs.Category, d.db)
-		simpleReturn := simpleReturn{Success: "True", Message: "The Feed has beed added."}
+		simpleReturn := simpleReturn{Success: "True", Message: "The Feed has beed added.", Content: "test string"}
 		json.NewEncoder(w).Encode(simpleReturn)
 
 	})
