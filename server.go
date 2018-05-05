@@ -94,8 +94,15 @@ func editFeedCategory(d withDB) http.Handler {
 func getFeedStoreDataHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		feedStore, _ := getFeedStoreData(d.db)
+
+		content, err := json.Marshal(&feedStore)
+		if err != nil {
+			fmt.Println("err: %s\n", err)
+		}
+		simpleReturn := simpleReturn{Success: "True", Message: "FeedStore", Content: string(content)}
+
 		// TODO: How do we want to handle a no match? Should we just return an empty reponse?
-		json.NewEncoder(w).Encode(feedStore)
+		json.NewEncoder(w).Encode(simpleReturn)
 	})
 }
 
