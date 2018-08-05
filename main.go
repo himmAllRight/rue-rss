@@ -10,7 +10,7 @@ import (
 // 1. [DONE] shift database to be an actual database
 // 2. [DONE] implement interface for multiple rss urls
 // 3. implement a loop to check feeds every XX minutes
-//
+// 4. Josh can make pushes
 
 var debug = true
 
