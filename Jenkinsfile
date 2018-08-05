@@ -6,9 +6,10 @@ pipeline {
     stages {
 	stage ('build') {
 	    steps{
-		sh 'cd ..'
-		sh 'ls -la'
-		sh 'go build' 
+		withEnv(["GOROOT=${root}", "PATH+GO=${root}/bin:${HOME}/go/bin"]) {
+		    sh "go get github.com/himmallright/rue-rss.git"
+
+		}
 	    }
 	}
     }
