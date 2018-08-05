@@ -1,11 +1,10 @@
 pipeline {
-    agent none
+    agent {
+	label 'mr-mime'
+    }
 
     stages {
 	stage ('build') {
-	    agent {
-		docker 'golang:latest'
-	    }
 	    steps{
 		sh 'cd ..'
 		sh 'ls -la'
