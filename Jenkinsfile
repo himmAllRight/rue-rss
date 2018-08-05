@@ -7,7 +7,7 @@ pipeline {
 		docker 'golang:latest'
 	    }
 	    steps{
-		sh 'pwd'
+		sh 'cd ..'
 		sh 'ls -la'
 		sh 'go build' 
 	    }
