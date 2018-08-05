@@ -7,6 +7,8 @@ pipeline {
 		docker 'golang:latest'
 	    }
 	    steps{
+		sh 'echo $GOROOT'
+		sh 'echo $GOPATH'
 		sh 'go build' 
 	    }
 	}
