@@ -1,0 +1,8 @@
+## used to initialize the sql db
+# "sqlite3"
+# "test-db2.db"
+
+# feed sources
+
+# "http://ryan.himmelwright.net/post/index.xml"
+
