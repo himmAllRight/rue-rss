@@ -1,0 +1,18 @@
+name: rue-rss
+version: git
+summary: A simple rss client server application.
+description: |
+  The server component to a simple RSS client server application
+
+grade: devel
+confinement: devmode
+
+parts:
+  rue-rss:
+    source: .
+    plugin: go
+    go-importpath: github.com/himmallright/rue-rss
+
+apps:
+  rue-rss:
+    command: rue-rss
