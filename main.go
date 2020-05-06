@@ -36,6 +36,9 @@ func checkErrJustLog(err error) {
 }
 
 func main() {
+	debugPrint("Load Config")
+	loadConfig()
+
 	debugPrint("Initializing DB")
 	db := initDB()
 
