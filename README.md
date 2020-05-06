@@ -49,11 +49,24 @@ curl -X POST -d "{\"URL\":\"http://ryan.himmelwright.net/post/index.xml\", \"Cat
     ... And more I can't think of at the top of my head
 
 - [ ] Setup Preferences System?
+    - [X] Load Preferences
+    - [ ] Create Default Preferences if Missing
+    - [ ] Define config options and values
+    - [ ] Update system to get values from config during run
+        - [ ] DB file location default or from config
+        - [ ] Feed Sources listed in config file
+        - [ ] Optional Integrations loaded if if config file
     ...
+- Integrations
+    - [ ] Pocket
+        - [ ] Authenticate with Pocket
+        - [ ] Import Feed Items into pocket list
+            - [ ] Only New items in DB
+            - [ ] Remain in DB if failed import
 - [ ] Authentication System
     ...
 - [ ] Project Build
-    - [ ] Properly organize application 
+    - [ ] Properly organize application
     - [ ] Determine build steps
     - [ ] Write build instructions
 
