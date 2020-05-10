@@ -1,16 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	_ "github.com/mattn/go-sqlite3"
 )
-
-// TODO
-// 1. [DONE] shift database to be an actual database
-// 2. [DONE] implement interface for multiple rss urls
-// 3. implement a loop to check feeds every XX minutes
-// 4. Josh can make pushes
 
 var debug = true
 
@@ -36,13 +31,20 @@ func checkErrJustLog(err error) {
 }
 
 func main() {
+	debugPrint("Load Config")
+	loadConfig()
+
 	debugPrint("Initializing DB")
 	db := initDB()
 
-	addFeedSource("http://ryan.himmelwright.net/post/index.xml", "Test", db)
+	debugPrint("Adding Feed Sources from config")
+	configFeedSources := configFeedSources()
+	for _, configFeedSource := range configFeedSources {
+		debugPrint(fmt.Sprintf("ConfigFeedSource: Category: %s URL: %s", configFeedSource.Category, configFeedSource.Feedurl))
+		addFeedSource(configFeedSource.Feedurl, configFeedSource.Category, db)
+	}
 
 	updateAllFeedSources(db)
 	debugPrint("hey its working.\n")
-
 	startServer(db)
 }
