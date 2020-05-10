@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+// FeedSourceConfig is an object that contains the information from the config
+// file, required to create a new FeedSource item.
 type FeedSourceConfig struct {
 	Feedurl  string
 	Category string
@@ -22,21 +24,10 @@ func loadConfig() {
 	if err != nil {             // Handle errors reading the config file
 		panic(fmt.Errorf("Fatal error config file: %s", err))
 	}
-	// Single Items (db src in this case)
-	dbSrc := viper.GetString("db.src")
-	debugPrint("Grabbed db src from config?")
-	debugPrint(dbSrc)
-
-	//	// Now how about listed items? (like feed urls)
-	//	for _, feed := range feeds {
-	//		debugPrint("In Cat Loop")
-	//		for _, url := range feed {
-	//			debugPrint(url)
-	//		}
-	//	}
-
 }
 
+// Grabs the sub configs keys of the config provided and returns them as a
+// []string
 func getConfigKeys(configName string) []string {
 	configItems := viper.GetStringMapStringSlice(configName)
 	keys := make([]string, len(configItems))
@@ -53,9 +44,9 @@ func getConfigKeys(configName string) []string {
 // them.
 func configFeedSources() []FeedSourceConfig {
 	configFeedSourceSlice := []FeedSourceConfig{}
-	categories := getConfigKeys("feeds")
+	categories := getConfigKeys("feed_sources")
 	for _, category := range categories {
-		catConfig := viper.GetStringSlice(fmt.Sprintf("feeds.%s", category))
+		catConfig := viper.GetStringSlice(fmt.Sprintf("feed_sources.%s", category))
 		for _, url := range catConfig {
 			feedSourceConfig := FeedSourceConfig{url, category}
 			configFeedSourceSlice = append(configFeedSourceSlice, feedSourceConfig)
