@@ -41,8 +41,6 @@ func main() {
 	configFeedSources := configFeedSources()
 	for _, configFeedSource := range configFeedSources {
 		debugPrint(fmt.Sprintf("ConfigFeedSource: Category: %s URL: %s", configFeedSource.Category, configFeedSource.Feedurl))
-
-		//addFeedSource("://ryan.himmelwright.net/post/index.xml", "Test", db)
 		addFeedSource(configFeedSource.Feedurl, configFeedSource.Category, db)
 	}
 
