@@ -49,17 +49,16 @@ func getConfigKeys(configName string) []string {
 	return keys
 }
 
+// Grabs all the Feed Sources defined in the config and returns objects for
+// them.
 func configFeedSources() []FeedSourceConfig {
 	configFeedSourceSlice := []FeedSourceConfig{}
 	categories := getConfigKeys("feeds")
-	debugPrint("Categories:")
-	for _, cat := range categories {
-		//catConfig := viper.GetStringSlice(fmt.Sprintf("feeds.%s", categories[i]))
-		catConfig := viper.GetStringSlice(fmt.Sprintf("feeds.%s", cat))
-		debugPrint(fmt.Sprintf("Loaded Cat Config: %s", cat))
+	for _, category := range categories {
+		catConfig := viper.GetStringSlice(fmt.Sprintf("feeds.%s", category))
 		for _, url := range catConfig {
-			//feedSourceConfig := FeedSourceConfig(categories[i], url)
-			debugPrint(url)
+			feedSourceConfig := FeedSourceConfig{url, category}
+			configFeedSourceSlice = append(configFeedSourceSlice, feedSourceConfig)
 		}
 	}
 	return configFeedSourceSlice
