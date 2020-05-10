@@ -6,6 +6,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+type FeedSourceConfig struct {
+	Feedurl  string
+	Category string
+}
+
 // Load and return a config from file.
 func loadConfig() {
 	viper.SetConfigName("config")
@@ -38,19 +43,24 @@ func getConfigKeys(configName string) []string {
 
 	i := 0
 	for k := range configItems {
-		debugPrint("In config keys loop")
-		debugPrint(k)
 		keys[i] = k
 		i++
 	}
 	return keys
 }
 
-func configFeedSources() {
+func configFeedSources() []FeedSourceConfig {
+	configFeedSourceSlice := []FeedSourceConfig{}
 	categories := getConfigKeys("feeds")
 	debugPrint("Categories:")
-	for i := range categories {
-		debugPrint(fmt.Sprintf("%d", cat))
-		debugPrint(categories[cat])
+	for _, cat := range categories {
+		//catConfig := viper.GetStringSlice(fmt.Sprintf("feeds.%s", categories[i]))
+		catConfig := viper.GetStringSlice(fmt.Sprintf("feeds.%s", cat))
+		debugPrint(fmt.Sprintf("Loaded Cat Config: %s", cat))
+		for _, url := range catConfig {
+			//feedSourceConfig := FeedSourceConfig(categories[i], url)
+			debugPrint(url)
+		}
 	}
+	return configFeedSourceSlice
 }
