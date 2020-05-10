@@ -4,6 +4,7 @@ import (
 	"log"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/spf13/viper"
 )
 
 // TODO
@@ -38,14 +39,18 @@ func checkErrJustLog(err error) {
 func main() {
 	debugPrint("Load Config")
 	loadConfig()
+	configFeedSources()
 
 	debugPrint("Initializing DB")
 	db := initDB()
 
 	addFeedSource("http://ryan.himmelwright.net/post/index.xml", "Test", db)
 
-	updateAllFeedSources(db)
+	// updateAllFeedSources(db)
 	debugPrint("hey its working.\n")
+
+	debugPrint("Can I just call to viper from here?")
+	debugPrint(viper.GetString("db.src"))
 
 	startServer(db)
 }

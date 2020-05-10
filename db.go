@@ -9,12 +9,13 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mmcdole/gofeed"
+	"github.com/spf13/viper"
 )
 
 // DB Schema Def
 var schema = `
 CREATE TABLE IF NOT EXISTS feedStore (
-	feedurl TEXT, 
+	feedurl TEXT,
 	category TEXT
 );
 
@@ -49,7 +50,8 @@ type FeedItem struct {
 
 // Init DB// Updates all the feed sources in feedStore table
 func initDB() *sqlx.DB {
-	db, err := sqlx.Connect("sqlite3", "test-db2.db")
+	src := viper.GetString("db.src")
+	db, err := sqlx.Connect("sqlite3", src)
 	checkErrFatal(err)
 	db.MustExec(schema)
 

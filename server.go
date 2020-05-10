@@ -51,7 +51,7 @@ func withLog(h http.Handler) http.Handler {
 	})
 }
 
-func readApiRequest(r *http.Request) requestValues {
+func readAPIRequest(r *http.Request) requestValues {
 	decoder := json.NewDecoder(r.Body)
 	var userRequest requestValues
 	err := decoder.Decode(&userRequest)
@@ -70,7 +70,7 @@ func readApiRequest(r *http.Request) requestValues {
 // Adds a new feed to the DB.
 func addFeedHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userArgs := readApiRequest(r)
+		userArgs := readAPIRequest(r)
 		// TODO: Add Return cases to specifiy Success/Failure
 		addFeedSource(userArgs.URL, userArgs.Category, d.db)
 		simpleReturn := simpleReturn{Success: "True", Message: "The Feed has beed added.", Content: "test string"}
@@ -82,7 +82,7 @@ func addFeedHandler(d withDB) http.Handler {
 // Edits feed source category
 func editFeedCategory(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userArgs := readApiRequest(r)
+		userArgs := readAPIRequest(r)
 		editFeedSourceCat(userArgs.URL, userArgs.Category, d.db)
 		// TODO: Add Return cases to specifiy Success/Failure
 		simpleReturn := simpleReturn{Success: "True", Message: "Feed Category Edited."}
@@ -109,7 +109,7 @@ func getFeedStoreDataHandler(d withDB) http.Handler {
 // Deletes a feed from the DB.
 func deleteFeedHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userArgs := readApiRequest(r)
+		userArgs := readAPIRequest(r)
 		deleteFeedSource(userArgs.URL, d.db)
 		// TODO: Add Return cases to specifiy Success/Failure
 		simpleReturn := simpleReturn{Success: "True", Message: "Feed Deleted."}
@@ -130,7 +130,7 @@ func updateAllFeedsHandler(d withDB) http.Handler {
 // Updates all the feed sources in feedStore table
 func getFeedItemDataHandler(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userArgs := readApiRequest(r)
+		userArgs := readAPIRequest(r)
 		feedItem, _ := getFeedItemData(userArgs.URL, d.db)
 		// TODO: How do we want to handle a no match? Should we just return an empty reponse?
 		json.NewEncoder(w).Encode(feedItem)
@@ -140,7 +140,7 @@ func getFeedItemDataHandler(d withDB) http.Handler {
 // Marks the feed item as read or unread
 func markFeedItemReadHandler(readValue int, d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userArgs := readApiRequest(r)
+		userArgs := readAPIRequest(r)
 		markReadValue(userArgs.URL, readValue, d.db)
 		// TODO: Add Return cases to specifiy Success/Failure
 		simpleReturn := simpleReturn{Success: "True", Message: "Feed Item Read Value marked"}
@@ -150,7 +150,7 @@ func markFeedItemReadHandler(readValue int, d withDB) http.Handler {
 
 func getAllFeedData(d withDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userArgs := readApiRequest(r)
+		userArgs := readAPIRequest(r)
 		allFeedData, _ := getAllFeedItemData(userArgs.URL, d.db)
 		json.NewEncoder(w).Encode(allFeedData)
 	})
